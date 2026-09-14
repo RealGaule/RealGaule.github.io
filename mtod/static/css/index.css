@@ -1,5 +1,5 @@
 /*
- * Title-only adaptation of Academic Project Page Template, based on Nerfies.
+ * Minimal adaptation of Academic Project Page Template, based on Nerfies.
  * Source: https://github.com/eliahuhorwitz/Academic-project-page-template
  * License: https://creativecommons.org/licenses/by-sa/4.0/
  * Retains the template's Bulma hero layout and dark, bold publication title.
@@ -27,7 +27,7 @@ main {
 }
 
 .hero-body {
-  padding: clamp(4rem, 12vh, 8rem) 1.5rem 4rem;
+  padding: clamp(4rem, 12vh, 8rem) 1.5rem 2rem;
 }
 
 .title.publication-title {
@@ -39,6 +39,28 @@ main {
   letter-spacing: -0.025em;
   overflow-wrap: break-word;
   text-wrap: balance;
+}
+
+.method-figure {
+  max-width: 1232px;
+  margin: 0 auto 3rem;
+  padding: 0 1.5rem;
+}
+
+.method-figure a {
+  display: block;
+  border-radius: 14px;
+}
+
+.method-figure a:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 4px;
+}
+
+.method-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .footer.template-credit {
