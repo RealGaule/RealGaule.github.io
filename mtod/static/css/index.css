@@ -1,0 +1,66 @@
+/*
+ * Title-only adaptation of Academic Project Page Template, based on Nerfies.
+ * Source: https://github.com/eliahuhorwitz/Academic-project-page-template
+ * License: https://creativecommons.org/licenses/by-sa/4.0/
+ * Retains the template's Bulma hero layout and dark, bold publication title.
+ */
+:root {
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --background-primary: #ffffff;
+  --background-secondary: #f8fafc;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  flex: 1;
+}
+
+.hero-body {
+  padding: clamp(4rem, 12vh, 8rem) 1.5rem 4rem;
+}
+
+.title.publication-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.footer.template-credit {
+  padding: 1.25rem 1.5rem;
+  background: var(--background-secondary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.template-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.template-credit a:hover,
+.template-credit a:focus-visible {
+  color: var(--text-primary);
+}
+
+.template-credit a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
