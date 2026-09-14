@@ -1,0 +1,78 @@
+{
+  "description": "Original illustrative 1-D single-process Sample then Refine variant; not the production two-process MToD algorithm, not a benchmark, not an exact-sampling claim.",
+  "files": {
+    "gif": "mtod-single-denoise.gif",
+    "poster": "mtod-single-denoise-poster.png",
+    "generator": "tools/render_mtod_density.py"
+  },
+  "reference_layout_only": "https://temporalscorerescaling.github.io/static/images/animated_1d/uncond_v_TSR_k1.0.gif; no reference artwork, frames, code, or data reused.",
+  "size": [
+    1120,
+    520
+  ],
+  "frames": 161,
+  "duration_ms": 11190,
+  "loop": true,
+  "seed": 260914,
+  "particles": 240,
+  "integration_steps": 720,
+  "target": {
+    "means": [
+      -2.4,
+      0.0,
+      2.35
+    ],
+    "weights": [
+      0.3,
+      0.38,
+      0.32
+    ],
+    "component_std": 0.3,
+    "p_sigma": "sum_j w_j Normal(x; mu_j, base_std^2 + sigma^2)",
+    "toy_cost": "J(x) = -log p_0(x)"
+  },
+  "schedule": {
+    "sigma_max": 1.65,
+    "sigma_min": 0.035,
+    "sigma_squared": "sigma_min^2 + (sigma_max^2 - sigma_min^2) * (1-progress)^3",
+    "switch_progress": 0.625,
+    "switch_sigma": 0.38043361619095256
+  },
+  "equations": {
+    "responsibility": "r_j(x,sigma) proportional to w_j exp(-(x-mu_j)^2/(2*(base_std^2+sigma^2)))",
+    "score": "grad log p_sigma(x) = (sum_j r_j mu_j - x)/(base_std^2+sigma^2)",
+    "sample": "x_next = x + (sigma_k^2-sigma_next^2) * score(x,sigma_k) + sqrt(sigma_k^2-sigma_next^2) * xi; xi ~ N(0,1)",
+    "refine": "x_next = x + (1-exp(-12*delta_progress)) * (sum_j r_j(x,sigma_k)*mu_j - x)",
+    "interpretation": "reverse-VE Euler-Maruyama sampling followed by damped annealed mean-shift on the same analytic smoothed density; no schedule reset, no particle reinitialization, no resampling; refinement changes the law and is not exact target sampling"
+  },
+  "initialization": "One draw from the analytic broad smoothed target p_sigma_max. No latent mixture assignments are used during particle updates.",
+  "visualization": {
+    "particle_density": "Gaussian KDE with fixed bandwidth 0.14",
+    "smoothed_target": "Analytic p_sigma at the current continuously decreasing sigma",
+    "colors": "Nearest-mean neighborhood of final endpoints, assigned retrospectively for visual identity only; never used by dynamics",
+    "trails": "All 240 particles with 18 stronger paths for legibility; points are not synthetic or manually assigned to modes."
+  },
+  "checks": {
+    "all_finite": true,
+    "strictly_decreasing_noise_variance": true,
+    "zero_injected_noise_after_switch": true,
+    "particle_count_constant": 240,
+    "final_neighborhood_counts": [
+      78,
+      88,
+      74
+    ],
+    "final_within_neighborhood_std": [
+      0.004643666851282697,
+      0.005908240444263229,
+      0.005588376446395956
+    ],
+    "max_abs_coordinate": 8.154048244831683,
+    "sigma_before_at_after_switch": [
+      0.3825312356317302,
+      0.38043361619095256,
+      0.3783399760952065
+    ]
+  },
+  "parameter_status": "All values and switch timing are illustrative choices, not tuned or validated performance conclusions."
+}

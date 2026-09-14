@@ -6,7 +6,8 @@ Static project site with two routes:
 - `/mtod/`: **Sample, Then Refine: Training-Free Diffusion for Offline Global Trajectory Planning**.
 
 The project page displays its title, a short English Motivation, one continuous
-BRHP schematic, and three saved-trajectory GIFs labeled only by task name.
+BRHP schematic, an illustrative single-denoise particle animation, and three
+saved-trajectory GIFs labeled only by task name.
 Required template/license credits remain at the bottom. There are no project-author
 names, affiliations, JavaScript, or analytics.
 This does not anonymize the GitHub repository or its commit history.
@@ -26,6 +27,22 @@ The diagram is editable vector artwork at `mtod/static/images/brhp-overview.svg`
 The figure is one left-to-right tree with a central selected lineage, omitted
 intermediate expansion, and schematic objective landscapes at the first and final
 layers. Its short labels are in English; click it to open the full-size SVG.
+
+The particle animation illustrates the proposed **single-denoise** MToD variant
+on a one-dimensional analytic mixture, not a robot task or benchmark result.
+The same particles first sample stochastically and then undergo deterministic,
+annealed mean-shift refinement along one continuously decreasing noise schedule.
+There is no particle restart or second noise schedule at the phase boundary.
+The right panel distinguishes the empirical particle density from the smoothed
+target density; mode-seeking refinement need not preserve the target distribution.
+This illustration does not change the optimizer: the current benchmark MToD
+implementation still uses its two-process sample/refine design.
+The layout is inspired by the density-evolution illustrations on the
+[Temporal Score Rescaling project page](https://temporalscorerescaling.github.io/);
+the simulation and rendered assets here are original, not copied from that site.
+Recreate it with `python tools/render_mtod_density.py` after installing NumPy,
+Matplotlib, and Pillow. The generator and its JSON manifest record the toy target,
+seed, noise schedule, switch point, and particle updates.
 
 The GIFs replay saved MPPI-BRHP consistency-test trajectories for Double Cart-Pole,
 Walker, and Push T; they are not new optimization runs or claims of task success.
