@@ -41,6 +41,24 @@ main {
   text-wrap: balance;
 }
 
+.motivation {
+  max-width: 1008px;
+  margin: 0 auto 1.5rem;
+  padding: 0 1.5rem;
+}
+
+.motivation h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+
+.motivation p {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
 .method-figure {
   max-width: 1232px;
   margin: 0 auto 3rem;
@@ -61,6 +79,50 @@ main {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.task-demos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  max-width: 1232px;
+  margin: 0 auto 3rem;
+  padding: 0 1.5rem;
+}
+
+.task-demo {
+  min-width: 0;
+  margin: 0;
+  text-align: center;
+}
+
+.task-demo figcaption {
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+
+.task-demo a,
+.task-demo img {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.task-demo img {
+  height: auto;
+}
+
+.task-demo a:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 4px;
+}
+
+@media (max-width: 767px) {
+  .task-demos {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
 }
 
 .footer.template-credit {

@@ -5,9 +5,10 @@ Static project site with two routes:
 - `/`: project entry page.
 - `/mtod/`: **Sample, Then Refine: Training-Free Diffusion for Offline Global Trajectory Planning**.
 
-The project page displays its title, a single annotated BRHP diagram, and required
-template/license credits. It includes no project-author names, affiliations,
-videos, JavaScript, or analytics.
+The project page displays its title, a short English Motivation, one continuous
+BRHP schematic, and three saved-trajectory GIFs labeled only by task name.
+Required template/license credits remain at the bottom. There are no project-author
+names, affiliations, JavaScript, or analytics.
 This does not anonymize the GitHub repository or its commit history.
 
 ## Local preview
@@ -22,7 +23,13 @@ Open <http://127.0.0.1:8000/> or <http://127.0.0.1:8000/mtod/>.
 The site is plain HTML/CSS; no build step is required.
 
 The diagram is editable vector artwork at `mtod/static/images/brhp-overview.svg`.
-All explanatory labels are inside the figure; click it to open the full-size SVG.
+The figure is one left-to-right tree with a central selected lineage, omitted
+intermediate expansion, and schematic objective landscapes at the first and final
+layers. Its short labels are in English; click it to open the full-size SVG.
+
+The GIFs replay saved MPPI-BRHP consistency-test trajectories for Double Cart-Pole,
+Walker, and Push T; they are not new optimization runs or claims of task success.
+They are stored in `mtod/static/gifs/`; clicking a GIF opens its full-size version.
 
 ## GitHub Pages and domains
 

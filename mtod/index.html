@@ -24,12 +24,48 @@
         </div>
       </div>
     </section>
+    <section class="motivation" aria-labelledby="motivation-title">
+      <h2 id="motivation-title">Motivation</h2>
+      <p>
+        Long-horizon trajectory optimization couples many control variables through
+        nonlinear dynamics, making nonconvex objectives difficult to search.
+        Short-horizon planning reduces this burden but can discard decisions whose
+        benefits appear later. Branched Receding-Horizon Planning (BRHP) retains
+        multiple optimized, low-cost continuations, groups candidates using sampled
+        cost barriers, and reassesses their value as planning advances. Delaying
+        premature pruning aims to preserve promising alternatives under a limited
+        computational budget, without guaranteeing global optimality.
+      </p>
+    </section>
     <figure class="method-figure">
       <a href="static/images/brhp-overview.svg" aria-label="Open the BRHP diagram at full size">
-        <img src="static/images/brhp-overview.svg" width="1280" height="1180"
-             alt="BRHP diagram with a branching tree, a schematic three-dimensional optimization landscape with low-cost basins and a sampled barrier, graph-based mode selection, overlapping planning windows, and the final committed trajectory.">
+        <img src="static/images/brhp-overview.svg" width="1440" height="730"
+             alt="A left-to-right BRHP tree with the selected trajectory in green between upper and lower branches, ellipses for omitted expansion, and schematic local-horizon and full-horizon landscapes locating candidate nodes and trajectory representations.">
       </a>
     </figure>
+    <section class="task-demos" aria-label="Task visualizations">
+      <figure class="task-demo">
+        <figcaption>Double Cart-Pole</figcaption>
+        <a href="static/gifs/double-cart-pole-mppi-brhp.gif">
+          <img src="static/gifs/double-cart-pole-mppi-brhp.gif" width="720" height="480"
+               loading="lazy" alt="Saved MPPI-BRHP trajectory replay for Double Cart-Pole.">
+        </a>
+      </figure>
+      <figure class="task-demo">
+        <figcaption>Walker</figcaption>
+        <a href="static/gifs/walker-mppi-brhp.gif">
+          <img src="static/gifs/walker-mppi-brhp.gif" width="720" height="480"
+               loading="lazy" alt="Saved MPPI-BRHP trajectory replay for Walker.">
+        </a>
+      </figure>
+      <figure class="task-demo">
+        <figcaption>Push T</figcaption>
+        <a href="static/gifs/pusht-mppi-brhp.gif">
+          <img src="static/gifs/pusht-mppi-brhp.gif" width="720" height="480"
+               loading="lazy" alt="Saved MPPI-BRHP trajectory replay for Push T.">
+        </a>
+      </figure>
+    </section>
   </main>
 
   <!-- Template attribution; this does not identify the paper's authors.
