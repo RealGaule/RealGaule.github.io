@@ -60,8 +60,11 @@ extra_javascript:
 
 extra_css:
   - https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css
+  - stylesheets/extra.css
 
 nav:
   - 首页: index.md
+  - 理论笔记:
+      - 高斯卷积、自由能与相对熵: theory/gibbs-convolution.md
   - 示例:
       - 写作速查: example/cheatsheet.md
