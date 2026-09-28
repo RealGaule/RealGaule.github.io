@@ -1,0 +1,50 @@
+{{- /* Yang/distill-style byline strip under the title block:
+       发布 · 更新 (only if lastmod differs by day) · 阅读 · 标签.
+       Full-width rules are drawn in CSS (.post-byline). */ -}}
+{{- $fmt := default "2006-01-02" site.Params.DateFormat }}
+{{- $items := slice }}
+
+{{- if not (.Param "hideAuthor") }}
+  {{- with (partial "author.html" .) }}
+    {{- $items = $items | append (dict "label" (i18n "byline_author") "value" (. | htmlEscape) "class" "byline-author") }}
+  {{- end }}
+{{- end }}
+
+{{- if not .Date.IsZero }}
+  {{- $v := printf `<time datetime="%s">%s</time>` (.Date.Format "2006-01-02") (.Date | time.Format $fmt) }}
+  {{- $items = $items | append (dict "label" (i18n "byline_published") "value" $v "class" "byline-date") }}
+  {{- if and (not .Lastmod.IsZero) (ne (.Lastmod.Format "2006-01-02") (.Date.Format "2006-01-02")) }}
+    {{- $u := printf `<time datetime="%s">%s</time>` (.Lastmod.Format "2006-01-02") (.Lastmod | time.Format $fmt) }}
+    {{- $items = $items | append (dict "label" (i18n "byline_updated") "value" $u "class" "byline-updated") }}
+  {{- end }}
+{{- end }}
+
+{{- if (.Param "ShowReadingTime") }}
+  {{- $rt := i18n "read_time" .ReadingTime | default (printf "%d 分钟" .ReadingTime) }}
+  {{- $items = $items | append (dict "label" (i18n "byline_read") "value" $rt "class" "byline-read") }}
+{{- end }}
+
+{{- $before := len $items }}
+{{- $tax := .Language.Params.Taxonomies.tag | default "tags" }}
+{{- with ($.GetTerms $tax) }}
+  {{- $links := slice }}
+  {{- $n := len . }}
+  {{- range $i, $t := . }}
+    {{- $sep := cond (lt (add $i 1) $n) `<span class="byline-sep">·</span>` "" }}
+    {{- $links = $links | append (printf `<span class="byline-tag"><a href="%s">%s</a>%s</span>` $t.RelPermalink ($t.LinkTitle | htmlEscape) $sep) }}
+  {{- end }}
+  {{- $items = $items | append (dict "label" (i18n "byline_tags") "value" (delimit $links " ") "class" "byline-tags") }}
+{{- end }}
+
+{{- with $items }}
+<div class="post-byline">
+  <div class="byline-grid byline-n{{ $before }}">
+    {{- range . }}
+    <div class="byline-item {{ .class }}">
+      <div class="byline-label">{{ .label }}</div>
+      <div class="byline-value">{{ .value | safeHTML }}</div>
+    </div>
+    {{- end }}
+  </div>
+</div>
+{{- end }}

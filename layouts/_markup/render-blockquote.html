@@ -1,0 +1,43 @@
+{{- /* Boxes via GitHub/Obsidian alert syntax (CSS: assets/css/extended/30-blocks.css):
+         > [!theorem] 定理 1（标题）      types: theorem definition conclusion formula note tip
+         > body line …                   every body line starts with "> "
+       "[!note]-" = collapsible, closed; "[!note]+" = collapsible, open.
+       No title -> 定理 / 定义 / 结论 / 公式 / 注 / 提示. Other alert types render as a
+       plain blockquote with a bold title. Leave a blank line between two boxes. */ -}}
+{{- $boxes := dict
+  "theorem"    "定理"
+  "definition" "定义"
+  "conclusion" "结论"
+  "formula"    "公式"
+  "note"       "注"
+  "tip"        "提示"
+-}}
+{{- $t := lower .AlertType -}}
+{{- $body := .Text | replaceRE `^\s*<p>\s*</p>` "" | safeHTML -}}
+{{- if and (eq .Type "alert") (isset $boxes $t) -}}
+{{- $title := or .AlertTitle (index $boxes $t) -}}
+{{- if .AlertSign -}}
+<details class="box box-{{ $t }}"{{ if eq .AlertSign "+" }} open{{ end }}>
+  <summary class="box-title">{{ $title }}</summary>
+  <div class="box-body">
+{{ $body }}
+  </div>
+</details>
+{{- else -}}
+<div class="box box-{{ $t }}">
+  <div class="box-title">{{ $title }}</div>
+  <div class="box-body">
+{{ $body }}
+  </div>
+</div>
+{{- end -}}
+{{- else if eq .Type "alert" -}}
+<blockquote class="alert alert-{{ $t }}">
+  <p><strong>{{ or .AlertTitle (title $t) }}</strong></p>
+{{ $body }}
+</blockquote>
+{{- else -}}
+<blockquote>
+{{ .Text }}
+</blockquote>
+{{- end -}}

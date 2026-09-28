@@ -1,0 +1,382 @@
+/* ==========================================================================
+   Article blocks: math, figures, boxes, tables, blockquotes,
+   footnotes and the reference list.
+   ========================================================================== */
+
+/* ---- 3.6 math (KaTeX) ---------------------------------------------------
+   "body" prefix: katex.min.css is linked after this bundle, so equal
+   specificity would lose. */
+body .katex {
+    font-size: 1.08em;
+}
+
+/* short inline formula glued to adjacent CJK punctuation (see extend_head) */
+.katex-nobr {
+    white-space: nowrap;
+}
+
+/* long display formulas scroll inside their own block, never the page */
+body .katex-display {
+    margin: 1em 0;
+    padding: .15em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+/* scroll cue for a formula wider than its block (phones mostly; overlay
+   scrollbars are invisible there): fade the edge that hides more formula.
+   The scroll-l / scroll-r classes are kept up to date by extend_head.html. */
+body .katex-display.scroll-r {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
+body .katex-display.scroll-l {
+    -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+}
+
+body .katex-display.scroll-l.scroll-r {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+}
+
+/* ---- 3.7 figures (auto-numbered: 图 N：) --------------------------------- */
+.post-content figure {
+    counter-increment: fig;
+    margin: 1.8em 0 0;
+}
+
+.post-content figure:not(:has(figcaption)) {
+    margin-bottom: 1.8em;
+}
+
+.post-content figure img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border-radius: 4px;
+    background: var(--fig-bg);
+    box-shadow: var(--fig-shadow);
+}
+
+.post-content figure > a {
+    display: block;
+    border: 0 !important;
+}
+
+/* default link = the image itself (figure shortcode): tap / click to open it full size */
+.post-content figure > a.fig-zoom {
+    cursor: zoom-in;
+}
+
+/* The caption box shrinks to its text and is centred, while the lines inside it stay
+   left-aligned: a one-line caption looks centred, a long one keeps a straight left edge. */
+.post-single .post-content figure > figcaption,
+.post-content figure > figcaption {
+    display: table;
+    max-width: 88%;
+    margin: 10px auto 28px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.55;
+    text-align: left;
+    color: var(--secondary);
+}
+
+.post-content figure > figcaption::before {
+    content: "图 " counter(fig) "：";
+}
+
+.post-content figure > figcaption .katex {
+    font-size: 1.05em;
+}
+
+/* ---- 3.9 boxes: > [!theorem] 定理 1（标题） ----------------------------- */
+.box {
+    --box-c: var(--box-note);
+    margin: 1.4em 0;
+    padding: 14px 18px;
+    border: 1px solid var(--divider);
+    border-left: 3px solid var(--box-c);
+    border-radius: 4px;
+    background: rgba(128, 128, 128, .05);
+    background: color-mix(in srgb, var(--box-c) var(--box-tint), transparent);
+}
+
+.box-theorem    { --box-c: var(--box-theorem); }
+.box-definition { --box-c: var(--box-definition); }
+.box-conclusion { --box-c: var(--box-conclusion); }
+.box-formula    { --box-c: var(--box-formula); }
+.box-note       { --box-c: var(--box-note); }
+.box-tip        { --box-c: var(--box-tip); }
+
+.box-title {
+    margin-bottom: 6px;
+    font-size: .95em;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--box-c);
+}
+
+.box-body {
+    min-width: 0;
+}
+
+.box-body > :first-child {
+    margin-top: 0;
+}
+
+.post-single .post-content .box-body > :last-child,
+.box-body > :last-child {
+    margin-bottom: 0;
+}
+
+.box-body > p:empty {
+    display: none;
+}
+
+.box .katex-display {
+    margin: .8em 0;
+}
+
+/* the box body is ~40px narrower than the text column; a slightly smaller
+   formula scale (1.04em instead of 1.08em) keeps the widest boxed formulas of a
+   note (e.g. a two-part \boxed{…}) inside the box at desktop width */
+.box .katex-display > .katex {
+    font-size: 1.04em;
+}
+
+/* auto-render wraps display math in a <span>; trim the outer margins when a
+   formula opens or closes the box */
+.box-body > :first-child > .katex-display:first-child {
+    margin-top: .3em;
+}
+
+.box-body > :last-child > .katex-display:last-child {
+    margin-bottom: .1em;
+}
+
+/* collapsible variant: > [!note]- 标题 (collapsed) / > [!note]+ 标题 (open) */
+details.box > summary.box-title {
+    display: list-item;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+details.box > summary.box-title::marker {
+    color: var(--box-c);
+}
+
+details.box[open] > summary.box-title {
+    margin-bottom: 6px;
+}
+
+/* phones: thinner side padding, ~10px more room for formulas and tables */
+@media screen and (max-width: 767.98px) {
+    .box {
+        padding: 12px 12px 12px 14px;
+    }
+}
+
+/* ---- 3.10 tables -------------------------------------------------------- */
+.post-single .post-content table:not(.highlighttable) {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 1.2em;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: .92em;
+    line-height: 1.6;
+    word-break: normal;
+    overflow-wrap: break-word;
+    scrollbar-width: thin;
+}
+
+.post-single .post-content.md-content table:not(.highlighttable) th,
+.post-single .post-content.md-content table:not(.highlighttable) td {
+    min-width: 3em;
+    padding: 6px 10px;
+    line-height: 1.6;
+    border: 0;
+    border-bottom: 1px solid var(--divider);
+    vertical-align: top;
+}
+
+/* short label columns: do not split a CJK word into one character per line */
+.post-single .post-content.md-content table:not(.highlighttable) th,
+.post-single .post-content.md-content table:not(.highlighttable) td:first-child {
+    word-break: keep-all;
+}
+
+.post-single .post-content.md-content table:not(.highlighttable) th {
+    font-weight: 600;
+    color: var(--primary);
+    border-bottom-color: var(--tertiary);
+    vertical-align: bottom;
+}
+
+.post-single .post-content .box table:not(.highlighttable) {
+    margin-bottom: .6em;
+}
+
+/* ---- task lists: - [x] / - [ ] ---------------------------------------- */
+.post-content li:has(> input[type="checkbox"]) {
+    list-style: none;
+}
+
+.post-content ul:has(> li > input[type="checkbox"]) {
+    padding-inline-start: .3em;
+}
+
+.post-content li > input[type="checkbox"] {
+    width: .95em;
+    height: .95em;
+    margin: 0 .5em 0 0;
+    vertical-align: -.1em;
+    accent-color: var(--accent);
+}
+
+/* Hugo renders task-list boxes as disabled, which Chrome paints pale grey for both states;
+   draw them ourselves so a checked box is clearly different from an empty one. */
+.post-content li > input[type="checkbox"][disabled] {
+    appearance: none;
+    box-sizing: border-box;
+    border: 1.5px solid var(--secondary);
+    border-radius: 3px;
+    background: transparent;
+    position: relative;
+    opacity: 1;
+}
+
+.post-content li > input[type="checkbox"][disabled]:checked {
+    border-color: var(--accent);
+    background: var(--accent);
+}
+
+.post-content li > input[type="checkbox"][disabled]:checked::after {
+    content: "";
+    position: absolute;
+    left: 28%;
+    top: 8%;
+    width: 30%;
+    height: 58%;
+    border: solid var(--theme);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Chroma marks Markdown emphasis in code as italic; CJK fonts have no italic, so the
+   browser fakes a slant. Keep code upright. */
+.chroma .ge {
+    font-style: normal;
+}
+
+/* ---- plain blockquote (not an alert) ------------------------------------ */
+.post-single .post-content blockquote {
+    margin: 1.2em 0;
+    padding: 0 0 0 1em;
+    border-inline-start: 3px solid var(--tertiary);
+    color: var(--secondary);
+}
+
+.post-single .post-content blockquote > :last-child {
+    margin-bottom: 0;
+}
+
+/* ---- code --------------------------------------------------------------- */
+.post-single .post-content :not(pre) > code {
+    font-size: .84em;
+    font-weight: 400;
+}
+
+.post-single .post-content hr {
+    height: 1px;
+    margin: 36px 0;
+    background: var(--divider);
+}
+
+/* ---- 3.8 footnotes (appendix style) ------------------------------------- */
+.post-content sup {
+    line-height: 0;
+}
+
+.post-content a.footnote-ref {
+    text-decoration: none;
+    color: var(--accent);
+    font-size: .8em;
+    padding: 0 1px;
+}
+
+.post-single .post-content .footnotes {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--divider);
+    font-size: .85em;
+    line-height: 1.7;
+    color: var(--secondary);
+}
+
+.post-content .footnotes > hr {
+    display: none;
+}
+
+.post-single .post-content .footnotes ol {
+    padding-inline-start: 1.4em;
+    margin: 0;
+}
+
+.post-single .post-content .footnotes li {
+    margin-bottom: .5em;
+}
+
+.post-single .post-content .footnotes li p {
+    margin: 0;
+}
+
+.post-content a.footnote-backref {
+    text-decoration: none;
+    color: var(--secondary);
+    margin-inline-start: .25em;
+}
+
+.post-content a.footnote-backref:hover {
+    color: var(--accent);
+}
+
+/* ---- reference list ------------------------------------------------------
+   Hook: the ordered list(s) following an h2 whose id ends in "文献"
+   (e.g. "## 7. 文献" -> id "7-文献", "## 参考文献") or "references",
+   or any <ol class="references">. */
+.post-single .post-content h2[id$="文献"] ~ ol,
+.post-single .post-content h2[id$="references"] ~ ol,
+.post-single .post-content ol.references {
+    font-size: .9em;
+    line-height: 1.65;
+    padding-inline-start: 1.8em;
+}
+
+.post-single .post-content h2[id$="文献"] ~ ol > li,
+.post-single .post-content h2[id$="references"] ~ ol > li,
+.post-single .post-content ol.references > li {
+    margin-bottom: .85em;
+    padding-inline-start: .2em;
+}
+
+.post-single .post-content h2[id$="文献"] ~ ol > li::marker,
+.post-single .post-content h2[id$="references"] ~ ol > li::marker,
+.post-single .post-content ol.references > li::marker {
+    color: var(--secondary);
+}
+
+/* titles: upright weight 500 (Yang Song), not italic + 500 + colour at once */
+.post-single .post-content h2[id$="文献"] ~ ol em,
+.post-single .post-content h2[id$="references"] ~ ol em,
+.post-single .post-content ol.references em {
+    font-style: normal;
+    font-weight: 500;
+    color: var(--primary);
+}

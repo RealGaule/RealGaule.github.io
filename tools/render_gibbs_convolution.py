@@ -24,7 +24,7 @@ import numpy as np
 from matplotlib import font_manager
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "notes-src/docs/assets/images/gibbs-convolution.svg"
+OUT = ROOT / "content/posts/gibbs-convolution/gibbs-convolution.svg"
 
 # ---------------------------------------------------------------- parameters
 LAM = 1.0              # temperature lambda

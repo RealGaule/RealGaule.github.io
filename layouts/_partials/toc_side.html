@@ -1,0 +1,12 @@
+{{- /* Yang/distill "d-contents" TOC for wide screens (>= 1400px, see CSS).
+       Same Hugo TOC (h2–h3) as the collapsible <details> fallback; CSS shows
+       exactly one of the two. KaTeX auto-render typesets math in both. */ -}}
+{{- $toc := .TableOfContents }}
+{{- if findRE `<a ` $toc 1 }}
+<aside class="toc-side" aria-label="{{ i18n "toc" | default "目录" }}">
+  <div class="toc-side-inner">
+    <div class="toc-side-title">{{ i18n "toc" | default "目录" }}</div>
+    {{ replace $toc ` id="TableOfContents"` "" | safeHTML }}
+  </div>
+</aside>
+{{- end }}

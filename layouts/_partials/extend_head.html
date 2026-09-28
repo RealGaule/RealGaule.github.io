@@ -1,0 +1,86 @@
+{{- /* favicon.ico / -16x16 / -32x32 / apple-touch-icon / safari-pinned-tab are linked by
+       PaperMod's head.html; all live in static/ and are drawn from static/favicon.svg. */ -}}
+<link rel="icon" type="image/svg+xml" href="{{ "favicon.svg" | absURL }}">
+{{- /* Roboto (Latin only; Chinese falls back to system fonts, no CJK web font).
+       Real italics (400/500) too, so <em> is not a synthesized oblique; the browser
+       only downloads the faces a page actually uses. */ -}}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400;1,500&display=swap">
+{{- /* Article body: 思源宋体 (Noto Serif SC) for Chinese + Source Serif 4 for Latin (the
+       Latin companion of Source Han Serif), so text, Chinese and the KaTeX (Computer Modern)
+       math are all serif. Fontsource splits the CJK font into ~100 unicode-range chunks,
+       so a page downloads only the chunks for the characters it contains. Pinned versions. */ -}}
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-serif-4@5.3.0/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-serif-4@5.3.0/400-italic.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-serif-4@5.3.0/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.3.0/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-serif-sc@5.3.0/700.css">
+{{- /* KaTeX auto-render, site-wide (params.math = true; a page may set `math: false`).
+       Goldmark passthrough leaves $…$, \(…\), $$…$$, \[…\] untouched for it. */ -}}
+{{- if (.Param "math") }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof renderMathInElement === "function") {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: "$$",  right: "$$",  display: true},
+          {left: "\\[", right: "\\]", display: true},
+          {left: "\\(", right: "\\)", display: false},
+          {left: "$",   right: "$",   display: false}
+        ],
+        ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"],
+        ignoredClasses: ["no-math"],
+        throwOnError: false,
+        trust: false,
+        strict: "ignore"
+      });
+      /* CJK line breaking: keep a short inline formula together with the
+         closing punctuation after it (…$x$。) or the opening bracket before it
+         (（$x$…), so "。" never starts a line. Long formulas stay breakable. */
+      var close = /^[，。、；：！？）》」』】’”…,.;:!?)\]]/, open = /[（《「『【‘“(\[]$/;
+      document.querySelectorAll(".katex").forEach(function (k) {
+        var tex = k.querySelector("annotation");
+        if (k.closest(".katex-display") || !tex || tex.textContent.length > 32) return;
+        /* auto-render puts each formula in an anonymous <span> */
+        var el = k.parentNode;
+        if (!(el.tagName === "SPAN" && !el.className && el.childNodes.length === 1)) el = k;
+        var n = el.nextSibling, p = el.previousSibling;
+        var tail = n && n.nodeType === 3 && close.test(n.data);
+        var head = p && p.nodeType === 3 && open.test(p.data);
+        if (!tail && !head) return;
+        var w = document.createElement("span");
+        w.className = "katex-nobr";
+        el.parentNode.insertBefore(w, el);
+        if (head) { w.appendChild(document.createTextNode(p.data.slice(-1))); p.data = p.data.slice(0, -1); }
+        w.appendChild(el);
+        if (tail) { w.appendChild(document.createTextNode(n.data.charAt(0))); n.data = n.data.slice(1); }
+      });
+      /* Scroll cue: a display formula wider than its block scrolls inside it;
+         mark the side(s) with hidden formula (CSS fades that edge). Re-checked
+         after scrolling, resizing, web fonts loading and a <details> opening. */
+      var ds = document.querySelectorAll(".katex-display");
+      var edge = function (d) {
+        var max = d.scrollWidth - d.clientWidth;
+        d.classList.toggle("scroll-l", max > 1 && d.scrollLeft > 1);
+        d.classList.toggle("scroll-r", max > 1 && d.scrollLeft < max - 1);
+      };
+      var all = function () { ds.forEach(edge); };
+      ds.forEach(function (d) {
+        edge(d);
+        d.addEventListener("scroll", function () { edge(d); }, {passive: true});
+      });
+      var t;
+      window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(all, 150); });
+      document.addEventListener("toggle", all, true);
+      window.addEventListener("load", all);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(all);
+    }
+    document.documentElement.dataset.mathReady = "1";
+  });
+</script>
+{{- end }}

@@ -1,0 +1,59 @@
+/* ==========================================================================
+   Home / cards / archive / tags (Lilian Weng's structure; mostly PaperMod
+   defaults: #f5f5f5 page, white cards, 2-line summary, meta line).
+   ========================================================================== */
+
+/* Lilian: compact intro card, not PaperMod's 320px centred hero */
+.first-entry.home-info {
+    min-height: 0;
+    margin: 40px 0 52px;
+}
+
+.home-info .entry-header h1 {
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.home-info .entry-content {
+    color: var(--secondary);
+    font-size: 16px;
+}
+
+.post-entry .entry-header h2 {
+    font-weight: 700;
+    text-wrap: balance;
+}
+
+.post-entry .entry-content {
+    margin: 10px 0;
+}
+
+.post-entry .entry-content .katex,
+.archive-entry .katex {
+    font-size: 1em;
+}
+
+.entry-footer,
+.archive-meta {
+    letter-spacing: .01em;
+}
+
+.archive-entry-title {
+    font-size: 17px;
+}
+
+/* tag cloud */
+.terms-tags a {
+    font-weight: 500;
+}
+
+.terms-tags sup strong {
+    font-weight: 400;
+    color: var(--secondary);
+}
+
+/* search results */
+.searchResults .entry-header,
+.searchResults li header {
+    font-size: 17px;
+}

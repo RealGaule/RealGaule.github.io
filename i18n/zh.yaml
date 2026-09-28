@@ -1,0 +1,26 @@
+# Site-specific strings. The theme's own zh.yaml still supplies the rest
+# (目录, 上一页/下一页, read_time = "N 分钟", 复制, …).
+
+# meta line on cards / archive: 日期：… | 预计阅读时间：… | 作者：…
+- id: meta_date
+  translation: "日期"
+- id: meta_read_time
+  translation: "预计阅读时间"
+- id: meta_author
+  translation: "作者"
+
+# byline strip on the post page
+- id: byline_published
+  translation: "发布"
+- id: byline_updated
+  translation: "更新"
+- id: byline_read
+  translation: "阅读"
+- id: byline_tags
+  translation: "标签"
+- id: byline_author
+  translation: "作者"
+
+# figure shortcode: tooltip of the image link (opens the image full size)
+- id: fig_open
+  translation: "打开原图"

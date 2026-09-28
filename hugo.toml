@@ -1,0 +1,125 @@
+baseURL = "https://realgaule.github.io/"
+locale = "zh-cn"
+defaultContentLanguage = "zh"
+hasCJKLanguage = true          # CJK-aware word count / reading time
+title = "RealGaule"
+theme = "PaperMod"             # git submodule, pinned (see README)
+
+[pagination]
+  pagerSize = 10
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]   # JSON = index.json for the search page
+
+[taxonomies]
+  tag = "tags"
+
+# the tag index page is generated (no content file); give it a Chinese title
+[[cascade]]
+  title = "标签"
+  [cascade.target]
+    kind = "taxonomy"
+    path = "/tags"
+
+# same for the posts section page (/posts/, sitemap + JSON-LD breadcrumb);
+# there is deliberately no content/posts/_index.md
+[[cascade]]
+  title = "笔记"
+  [cascade.target]
+    kind = "section"
+    path = "/posts"
+
+# ---------------------------------------------------------------- menu
+[menus]
+  [[menus.main]]
+    identifier = "notes"
+    name = "笔记"
+    pageRef = "/"
+    weight = 10
+  [[menus.main]]
+    identifier = "projects"
+    name = "项目"
+    pageRef = "/projects"
+    weight = 15
+  [[menus.main]]
+    identifier = "archives"
+    name = "归档"
+    pageRef = "/archives"
+    weight = 20
+  [[menus.main]]
+    identifier = "search"
+    name = "搜索"
+    pageRef = "/search"
+    weight = 30
+  [[menus.main]]
+    identifier = "tags"
+    name = "标签"
+    pageRef = "/tags"
+    weight = 40
+  [[menus.main]]
+    identifier = "cheatsheet"
+    name = "写作速查"
+    pageRef = "/cheatsheet"
+    weight = 50
+
+# ---------------------------------------------------------------- params
+[params]
+  description = "学习笔记：推导、公式与直观理解。"
+  author = ""                  # leave empty: no name is shown anywhere
+  mainSections = ["posts"]
+  defaultTheme = "auto"
+  DateFormat = "2006-01-02"
+
+  ShowReadingTime = true
+  ShowWordCount = false
+  ShowToc = true
+  TocOpen = false
+  UseHugoToc = true            # h2–h3 only, see [markup.tableOfContents]
+  ShowCodeCopyButtons = true
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = false
+  ShowShareButtons = false
+  ShowRssButtonInSectionTermList = false
+  hideSummary = false
+  disableSpecial1stPost = true
+
+  math = true                  # KaTeX site-wide (list summaries contain math too)
+
+  [params.homeInfoParams]
+    Title = "👋 RealGaule"
+    Content = "学习笔记：推导、公式与直观理解。"
+
+  [[params.socialIcons]]
+    name = "github"
+    title = "GitHub"
+    url = "https://github.com/RealGaule"
+
+# ---------------------------------------------------------------- markup
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+    [markup.goldmark.extensions]
+      [markup.goldmark.extensions.passthrough]
+        enable = true
+        [markup.goldmark.extensions.passthrough.delimiters]
+          block  = [['\[', '\]'], ['$$', '$$']]
+          inline = [['\(', '\)'], ['$', '$']]
+  [markup.highlight]
+    noClasses = false
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+    ordered = false
+
+# ---------------------------------------------------------------- mounts
+# The whole site is built by Hugo. The hand-written project page mtod/ stays where it is in
+# the repo and is copied verbatim to /mtod/. Declaring any static mount replaces Hugo's
+# default one, so static/ -> static is listed again.
+[module]
+  [[module.mounts]]
+    source = "static"
+    target = "static"
+  [[module.mounts]]
+    source = "mtod"
+    target = "static/mtod"

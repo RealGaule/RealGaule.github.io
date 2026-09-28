@@ -1,0 +1,26 @@
+{{- /* Math passthrough ($…$, \(…\), $$…$$, \[…\]) -> text for KaTeX auto-render.
+       Goldmark keeps the "> " markers of continuation lines when a display
+       formula spans several lines inside a blockquote / box:
+         > $$
+         > a = b
+         > $$
+       If every line after the first starts with ">", strip one marker level.
+       .Inner is HTML-escaped by the template engine; KaTeX reads text nodes,
+       so "<", "&" in formulas are safe. */ -}}
+{{- $inner := .Inner }}
+{{- if eq .Type "block" }}
+  {{- $lines := split $inner "\n" }}
+  {{- if gt (len $lines) 1 }}
+    {{- $rest := after 1 $lines }}
+    {{- $quoted := true }}
+    {{- range $rest }}
+      {{- if not (findRE `^[ \t]*>` . 1) }}{{ $quoted = false }}{{ end }}
+    {{- end }}
+    {{- if $quoted }}
+      {{- $inner = replaceRE `(?m)^[ \t]*>[ \t]?` "" $inner }}
+    {{- end }}
+  {{- end -}}
+$${{ $inner }}$$
+{{- else -}}
+\({{ $inner }}\)
+{{- end -}}

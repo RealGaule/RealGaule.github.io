@@ -1,0 +1,149 @@
+/* ==========================================================================
+   Notes theme layer on top of PaperMod.
+   Every colour / size used by the other extended/*.css files lives here,
+   once for light (:root) and once for dark (:root[data-theme="dark"]).
+   Files in this folder are concatenated in name order after PaperMod's CSS.
+   ========================================================================== */
+
+/* Chinese punctuation in a Chinese font. Roboto (first in the stack) has its own
+   glyphs for the em dash and the curly double quotes, so "——" would render as two
+   short Latin dashes and “ ” as narrow Latin quotes. This alias face covers only
+   those code points and points at the system CJK fonts (no web-font download);
+   if none is installed it fails to load and the stack falls through to Roboto.
+   U+2018/2019 (‘ ’) are left to Roboto on purpose: ’ is also the apostrophe
+   that Hugo's typographer produces in English text. */
+@font-face {
+    font-family: "CJK Punct";
+    font-weight: 100 549;
+    src: local("PingFangSC-Regular"), local("PingFang SC Regular"),
+        local("HiraginoSansGB-W3"), local("Hiragino Sans GB W3"),
+        local("NotoSansCJKsc-Regular"), local("Noto Sans CJK SC"), local("Noto Sans CJK SC Regular"),
+        local("SourceHanSansSC-Regular"), local("Source Han Sans SC Regular"),
+        local("NotoSansSC-Regular"), local("Noto Sans SC Regular"),
+        local("MicrosoftYaHei"), local("Microsoft YaHei");
+    unicode-range: U+2014, U+201C-201D, U+2026;
+}
+
+@font-face {
+    font-family: "CJK Punct";
+    font-weight: 550 900;
+    src: local("PingFangSC-Semibold"), local("PingFang SC Semibold"),
+        local("HiraginoSansGB-W6"), local("Hiragino Sans GB W6"),
+        local("NotoSansCJKsc-Bold"), local("Noto Sans CJK SC Bold"),
+        local("SourceHanSansSC-Bold"), local("Source Han Sans SC Bold"),
+        local("NotoSansSC-Bold"), local("Noto Sans SC Bold"),
+        local("MicrosoftYaHei-Bold"), local("Microsoft YaHei Bold");
+    unicode-range: U+2014, U+201C-201D, U+2026;
+}
+
+:root {
+    /* fonts: Roboto (Google Fonts) for Latin, system CJK fonts for Chinese
+       ("CJK Punct" only claims the Chinese dash / quotes / ellipsis, see above) */
+    --font-body: "CJK Punct", Roboto, -apple-system, "Segoe UI", "Helvetica Neue", "PingFang SC",
+        "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    /* article body text (serif): Latin in Source Serif 4, Chinese in 思源宋体 (web fonts, see
+       extend_head.html); Chinese quotes / dashes / ellipsis come from "CJK Punct Serif" */
+    --font-serif: "CJK Punct Serif", "Source Serif 4", "Noto Serif SC", "Source Han Serif SC",
+        "Noto Serif CJK SC", "Songti SC", "STSong", "SimSun", serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    /* article column + typography (Yang Song / distill) */
+    --article-width: 800px;       /* between distill's 704px and the earlier 960px (user asked for narrower, 2026-09-27) */
+    --article-size: 17px;
+    --article-line: 1.75;
+    --article-weight: 400;        /* see README / report: 300 is too thin for CJK */
+    --title-size: 44px;
+    --h2-size: 30px;
+
+    /* accent (Yang's orange, darkened for contrast: 5.2:1 on white; dark 7.4:1) */
+    --accent: #c2410c;
+    --accent-soft: color-mix(in srgb, var(--accent) 40%, transparent);
+
+    /* hairlines */
+    --divider: rgba(0, 0, 0, .1);
+
+    /* left-margin TOC (>= 1400px) */
+    --toc-width: 220px;
+    --toc-gap: 36px;
+    --toc-top: 80px;
+
+    /* figures */
+    --fig-bg: #fff;
+    --fig-shadow: 0 2px 5px rgba(0, 0, 0, .16), 0 2px 10px rgba(0, 0, 0, .12);
+
+    /* boxes: theorem / definition / conclusion / formula / note / tip.
+       Box titles are ~16px bold (not "large text"), so they need 4.5:1 on the
+       tinted box background: definition and note/tip are one step darker than
+       the spec's #0c8599 / #868e96 (4.1:1 / 3.2:1). The dark values pass as is. */
+    --box-theorem: #3b5bdb;
+    --box-definition: #0b7285;
+    --box-conclusion: var(--accent);
+    --box-formula: #5c677d;
+    --box-note: #6b6b6b;
+    --box-tip: #6b6b6b;
+    --box-tint: 5%;
+}
+
+/* Dark palette (Yang): bg #1c1c1d, text #e8e8e8, divider #424246, card #212529.
+   Merged into PaperMod's own variables so every page uses the same values. */
+:root[data-theme="dark"] {
+    --theme: #1c1c1d;
+    --entry: #212529;
+    --primary: #e8e8e8;
+    --secondary: #9b9c9d;
+    --tertiary: #424246;
+    --content: #e8e8e8;
+    --code-block-bg: #2c3237;
+    --code-bg: #2c3237;
+    --border: #424246;
+
+    --accent: #ff8a4c;
+    --divider: #424246;
+
+    --fig-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+
+    --box-theorem: #91a7ff;
+    --box-definition: #66d9e8;
+    --box-formula: #adb5bd;
+    --box-note: #868e96;
+    --box-tip: #868e96;
+    --box-tint: 6%;
+}
+
+/* Same idea as "CJK Punct", for the serif body: Source Serif 4 would draw “ ” and —— as
+   narrow Latin glyphs. The web font "Noto Serif SC" covers these code points too (its
+   Latin subset), so it is the last fallback when no local serif CJK font exists. */
+@font-face {
+    font-family: "CJK Punct Serif";
+    font-weight: 100 549;
+    src: local("NotoSerifCJKsc-Regular"), local("Noto Serif CJK SC"),
+        local("SourceHanSerifSC-Regular"), local("Source Han Serif SC"),
+        local("STSongti-SC-Regular"), local("Songti SC Regular"), local("SimSun");
+    unicode-range: U+2014, U+201C-201D, U+2026;
+}
+
+@font-face {
+    font-family: "CJK Punct Serif";
+    font-weight: 550 900;
+    src: local("NotoSerifCJKsc-Bold"), local("Noto Serif CJK SC Bold"),
+        local("SourceHanSerifSC-Bold"), local("Source Han Serif SC Bold"),
+        local("STSongti-SC-Bold"), local("Songti SC Bold");
+    unicode-range: U+2014, U+201C-201D, U+2026;
+}
+
+body {
+    font-family: var(--font-body);
+}
+
+code,
+kbd,
+pre,
+samp {
+    font-family: var(--font-mono);
+}
+
+/* regular pages (posts, cheatsheet) use the wider article column (--article-width);
+   list pages (home, archive, search, tags) keep PaperMod's 720px */
+body:not(.list) {
+    --main-width: var(--article-width);
+}

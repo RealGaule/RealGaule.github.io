@@ -1,0 +1,40 @@
+{{- /* figure: src resolves page-bundle / assets / static paths relative to the site base URL.
+       usage: figure src="plot.svg" alt="…" caption=`说明，可含 $x$ 与 **加粗**`
+       Captions go through markdownify (math survives) and are numbered by CSS
+       ("图 N："), so do not write the number yourself. Optional: class, link, width, height.
+       The image links to itself (click / tap = open it full size) unless `link` is
+       given; link="none" turns the link off. */ -}}
+{{- $src := .Get "src" -}}
+{{- $u := urls.Parse $src -}}
+{{- if not $u.IsAbs -}}
+  {{- $path := strings.TrimPrefix "./" $u.Path -}}
+  {{- with or (.Page.Resources.Get $path) (resources.Get (strings.TrimPrefix "/" $path)) -}}
+    {{- $src = .RelPermalink -}}
+  {{- else -}}
+    {{- if hasPrefix $path "/" }}{{ $src = relURL (strings.TrimPrefix "/" $path) }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+{{- $link := .Get "link" | default $src -}}
+{{- if eq $link "none" }}{{ $link = "" }}{{ end -}}
+{{- $zoom := and $link (eq $link $src) -}}
+{{- /* A caption may span several source lines. markdownify keeps each line break,
+       which the browser shows as a space, i.e. a visible gap in Chinese text
+       ("。 （b）"). Drop a line break (and the blanks around it) when the characters
+       on both sides are CJK (Han, CJK punctuation, full-width forms); breaks next
+       to Latin text or math stay a normal space. Run twice for one-character lines. */ -}}
+{{- $caption := .Get "caption" -}}
+{{- with $caption -}}
+  {{- $cjk := `[\p{Han}\x{3000}-\x{303F}\x{FF00}-\x{FFEF}]` -}}
+  {{- $re := printf `(%s)[ \t]*\r?\n[ \t]*(%s)` $cjk $cjk -}}
+  {{- $caption = . | replaceRE $re "${1}${2}" | replaceRE $re "${1}${2}" -}}
+{{- end -}}
+<figure{{ with .Get "class" }} class="{{ . }}"{{ end }}>
+  {{- with $link }}<a href="{{ . }}"{{ if $zoom }} class="fig-zoom" title="{{ i18n "fig_open" | default "打开原图" }}"{{ end }}>{{ end }}
+  <img loading="lazy" src="{{ $src }}"
+       alt="{{ with .Get "alt" }}{{ . }}{{ else }}{{ $caption | markdownify | plainify }}{{ end }}"
+       {{- with .Get "width" }} width="{{ . }}"{{ end }}{{ with .Get "height" }} height="{{ . }}"{{ end }}>
+  {{- with $link }}</a>{{ end }}
+  {{- with $caption }}
+  <figcaption>{{ . | markdownify }}</figcaption>
+  {{- end }}
+</figure>
