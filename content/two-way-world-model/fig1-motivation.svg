@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" width="900" height="330" role="img" aria-labelledby="t d">
+<title id="t">Video and 3D prediction err at different horizons and on different things</title>
+<desc id="d">Left: tracked-point error against horizon for a 3D-native point model and a video model with depth; the point model is lower at 2 s and higher at 8 s. Right: what each stream is strong and weak at.</desc>
+<style>
+text{font-family:Roboto,Helvetica,Arial,sans-serif;font-size:12.5px;fill:#222222}
+.h{font-size:13.5px;font-weight:600} .H{font-size:15px;font-weight:600}
+.s{font-size:11.5px;fill:#555555} .m{text-anchor:middle} .e{text-anchor:end}
+.cb{fill:#3b5bdb} .co{fill:#c2410c} .cg{fill:#6b7280} .w{font-weight:600}
+.box{fill:#fff;stroke-width:1.6} .b{stroke:#3b5bdb} .o{stroke:#c2410c} .g{stroke:#6b7280}
+.frz{fill:#eceff3;stroke:#6b7280;stroke-width:1.4}
+.lb{stroke:#3b5bdb;stroke-width:1.8;fill:none} .lo{stroke:#c2410c;stroke-width:1.8;fill:none}
+.lg{stroke:#6b7280;stroke-width:1.4;fill:none} .dash{stroke-dasharray:5 4}
+</style>
+<defs><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b5bdb"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2410c"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<rect width="900" height="330" fill="#fff"/>
+<text x="80" y="28" class="H" >(a) Tracked-point error against horizon</text>
+<line x1="80" y1="207.1" x2="440" y2="207.1" stroke="#e3e3e3"/>
+<line x1="80" y1="144.3" x2="440" y2="144.3" stroke="#e3e3e3"/>
+<line x1="80" y1="81.4" x2="440" y2="81.4" stroke="#e3e3e3"/>
+<path d="M80,50 V270 H440" class="lg" style="stroke:#444"/>
+<line x1="152" y1="270" x2="152" y2="275" stroke="#444"/>
+<text x="152" y="290" class="s m" >2</text>
+<line x1="224" y1="270" x2="224" y2="275" stroke="#444"/>
+<text x="224" y="290" class="s m" >4</text>
+<line x1="296" y1="270" x2="296" y2="275" stroke="#444"/>
+<text x="296" y="290" class="s m" >6</text>
+<line x1="368" y1="270" x2="368" y2="275" stroke="#444"/>
+<text x="368" y="290" class="s m" >8</text>
+<text x="72" y="274.0" class="s e" >0</text>
+<text x="72" y="211.14285714285714" class="s e" >20</text>
+<text x="72" y="148.28571428571428" class="s e" >40</text>
+<text x="72" y="85.42857142857144" class="s e" >60</text>
+<text x="260" y="312" class="m" >horizon (s)</text>
+<text x="28" y="160" class="m" transform="rotate(-90 28 160)">tracked-point error (mm)</text>
+<line x1="152" y1="197.7" x2="368" y2="94.0" class="lb" style="stroke-width:2.6"/>
+<circle cx="152" cy="197.7" r="5" class="cb"/>
+<circle cx="368" cy="94.0" r="5" class="cb"/>
+<line x1="152" y1="172.6" x2="368" y2="125.4" class="lo" style="stroke-width:2.6"/>
+<circle cx="152" cy="172.6" r="5" class="co"/>
+<circle cx="368" cy="125.4" r="5" class="co"/>
+<text x="161" y="213.71428571428572" class="s cb w" >23 mm</text>
+<text x="161" y="164.57142857142856" class="s co w" >31 mm</text>
+<text x="377" y="98.0" class="s cb w" >56 mm</text>
+<text x="377" y="129.42857142857144" class="s co w" >46 mm</text>
+<line x1="96" y1="66" x2="124" y2="66" class="lb" style="stroke-width:2.6"/><text x="132" y="70" class="s" >3D-native point model (PointWorld)</text>
+<line x1="96" y1="86" x2="124" y2="86" class="lo" style="stroke-width:2.6"/><text x="132" y="90" class="s" >video model with depth (DepthWorld)</text>
+<text x="240" y="256" class="s cb" >3D: precise early, drifts late</text>
+<text x="240" y="240" class="s co" >video: coarser early, stable late</text>
+<text x="500" y="28" class="H" >(b) Where each stream is strong and weak</text>
+<text x="500" y="62" class="h co" >Video prior</text>
+<text x="500" y="88" class="s w" >strong at</text>
+<text x="510" y="108" class="" >· appearance and texture</text>
+<text x="510" y="126" class="" >· occluded and new content</text>
+<text x="510" y="144" class="" >· contact outcomes seen in video</text>
+<text x="510" y="162" class="" >· internet-scale motion prior</text>
+<text x="500" y="196" class="s w" >weak at</text>
+<text x="510" y="216" class="" >· metric scale, along-ray depth</text>
+<text x="510" y="234" class="" >· action faithfulness</text>
+<text x="510" y="252" class="" >· optimistic on failures</text>
+<text x="510" y="270" class="" >· no explicit state to plan on</text>
+<text x="700" y="62" class="h cb" >Metric 3D state</text>
+<text x="700" y="88" class="s w" >strong at</text>
+<text x="710" y="108" class="" >· metric, robot fixed by FK</text>
+<text x="710" y="126" class="" >· cheap rollouts (0.1 s)</text>
+<text x="710" y="144" class="" >· explicit, plannable, editable</text>
+<text x="710" y="162" class="" >· short-horizon precision</text>
+<text x="700" y="196" class="s w" >weak at</text>
+<text x="710" y="216" class="" >· no appearance</text>
+<text x="710" y="234" class="" >· contact it has not seen</text>
+<text x="710" y="252" class="" >· occluded points unsupervised</text>
+<text x="710" y="270" class="" >· drift by 8 s</text>
+<line x1="500" y1="74" x2="880" y2="74" stroke="#ddd"/>
+</svg>

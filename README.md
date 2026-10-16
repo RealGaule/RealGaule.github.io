@@ -152,3 +152,12 @@ and an original BRHP diagram. The adapted project page is licensed under
 The bundled [Bulma](https://github.com/jgthms/bulma) stylesheet is separately
 licensed under the [MIT License](mtod/static/css/BULMA-LICENSE.txt).
 Retain the applicable attribution and license notices when reusing these files.
+
+## The `/two-way-world-model/` project page
+
+An English research proposal (October 2026) for a predictor-corrector world model that
+couples a metric 3D point state with a frozen video generator in both directions. It is an
+ordinary Hugo page bundle, `content/two-way-world-model/index.md`, linked from `/projects/`.
+Its four SVG figures are drawn by `tools/render_two_way_world_model_figs.py` (standard
+library only); rerun it after editing the figure text. The page overrides the caption
+prefix to "Figure N." with a one-line `<style>` at the top of the Markdown.

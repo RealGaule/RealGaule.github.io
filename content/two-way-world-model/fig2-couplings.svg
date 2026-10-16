@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 275" width="960" height="275" role="img" aria-labelledby="t d">
+<title id="t">How published models couple video and 3D, and the proposed two-way loop</title>
+<desc id="d">Four panels. (a) an auxiliary 3D branch receives video features during training and is removed at inference. (b) a 3D head reads geometry out of the video model as an output. (c) 3D renders or flow condition the video model. (d) the proposal: the 3D state renders and conditions the video model, and the video model is read out and fused back into the state, every chunk, at inference.</desc>
+<style>
+text{font-family:Roboto,Helvetica,Arial,sans-serif;font-size:12.5px;fill:#222222}
+.h{font-size:13.5px;font-weight:600} .H{font-size:15px;font-weight:600}
+.s{font-size:11.5px;fill:#555555} .m{text-anchor:middle} .e{text-anchor:end}
+.cb{fill:#3b5bdb} .co{fill:#c2410c} .cg{fill:#6b7280} .w{font-weight:600}
+.box{fill:#fff;stroke-width:1.6} .b{stroke:#3b5bdb} .o{stroke:#c2410c} .g{stroke:#6b7280}
+.frz{fill:#eceff3;stroke:#6b7280;stroke-width:1.4}
+.lb{stroke:#3b5bdb;stroke-width:1.8;fill:none} .lo{stroke:#c2410c;stroke-width:1.8;fill:none}
+.lg{stroke:#6b7280;stroke-width:1.4;fill:none} .dash{stroke-dasharray:5 4}
+</style>
+<defs><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b5bdb"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2410c"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<rect width="960" height="275" fill="#fff"/>
+<text x="125" y="30" class="H m" >(a) auxiliary 3D branch</text>
+<rect x="21" y="70" width="80" height="44" rx="4" class="frz"/>
+<rect x="149" y="70" width="80" height="44" rx="4" class="box g dash"/>
+<text x="61.0" y="97" class="m h" >Video DiT</text>
+<text x="189.0" y="97" class="m h" >3D branch</text>
+<path d="M101,92 L149,92" class="lg dash" marker-end="url(#ag)"/>
+<text x="125.0" y="62" class="s m " >features (train only)</text>
+<text x="189.0" y="132" class="s m co" >removed at inference</text>
+<text x="125" y="176" class="s m" >GEM-4D, HF-WM, DreamWAM,</text>
+<text x="125" y="192" class="s m" >Geometry Forcing, GaussianWAM</text>
+<text x="125" y="246" class="m " >3D shapes training, then vanishes</text>
+<line x1="247" y1="20" x2="247" y2="262" stroke="#e3e3e3"/>
+<text x="362" y="30" class="H m" >(b) 3D as a readout</text>
+<rect x="258" y="70" width="80" height="44" rx="4" class="frz"/>
+<rect x="386" y="70" width="80" height="44" rx="4" class="box g"/>
+<text x="298.0" y="97" class="m h" >Video DiT</text>
+<text x="426.0" y="97" class="m h" >3D head</text>
+<path d="M338,92 L386,92" class="lg" marker-end="url(#ag)"/>
+<text x="362.0" y="62" class="s m " >read out</text>
+<path d="M426.0,114 L426.0,140" class="lg" marker-end="url(#ag)"/>
+<text x="426.0" y="152" class="s m" >3D output</text>
+<text x="362" y="176" class="s m" >DepthWorld, TesserAct</text>
+<text x="362" y="246" class="m " >3D is an output, never fed back</text>
+<line x1="484" y1="20" x2="484" y2="262" stroke="#e3e3e3"/>
+<text x="599" y="30" class="H m" >(c) 3D as conditioning</text>
+<rect x="495" y="70" width="80" height="44" rx="4" class="box b"/>
+<rect x="623" y="70" width="80" height="44" rx="4" class="frz"/>
+<text x="535.0" y="97" class="m h" >3D input</text>
+<text x="663.0" y="97" class="m h" >Video DiT</text>
+<path d="M575,92 L623,92" class="lg" marker-end="url(#ag)"/>
+<text x="599.0" y="62" class="s m " >render, flow</text>
+<text x="599" y="176" class="s m" >Hydra-0, RoboRender, SimForcing;</text>
+<text x="599" y="192" class="s m" >World from Motion (per-video</text>
+<text x="599" y="208" class="s m" >camera loop, no actions)</text>
+<text x="599" y="246" class="m " >3D is an input, never corrected</text>
+<line x1="721" y1="20" x2="721" y2="262" stroke="#e3e3e3"/>
+<text x="836" y="30" class="H m" >(d) this proposal</text>
+<rect x="732" y="70" width="80" height="44" rx="4" class="box b"/>
+<rect x="860" y="70" width="80" height="44" rx="4" class="frz"/>
+<text x="772.0" y="97" class="m h" >3D state</text>
+<text x="900.0" y="97" class="m h" >Video DiT</text>
+<path d="M812,84 L860,84" class="lb" marker-end="url(#ab)"/>
+<text x="836.0" y="62" class="s m cb" >render, condition</text>
+<path d="M860,102 L812,102" class="lo" marker-end="url(#ao)"/>
+<text x="836.0" y="130" class="s m co w" >read out, fuse</text>
+<path d="M772.0,44 L772.0,68" class="lb" marker-end="url(#ab)"/>
+<text x="766.0" y="58" class="s e" >action</text>
+<path d="M900.0,114 L900.0,138" class="lo" marker-end="url(#ao)"/>
+<text x="906.0" y="134" class="s" >video</text>
+<text x="836" y="176" class="s m" >predictor-corrector loop</text>
+<text x="836" y="246" class="m co w" >two-way, every chunk, at inference</text>
+</svg>

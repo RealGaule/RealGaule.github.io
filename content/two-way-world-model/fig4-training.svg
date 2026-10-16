@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 455" width="960" height="455" role="img" aria-labelledby="t d">
+<title id="t">Four training stages and the closed-loop stage in detail</title>
+<desc id="d">Top: four columns, one per stage, each listing which of the four modules is trained, frozen or unused, the data and the loss. Bottom: the closed-loop stage unrolls the chunk loop over several states, supervises the fused state with real tracks and with the generated frames, adds an agreement term, and distils counterfactual responses from the video model in robot-only mode.</desc>
+<style>
+text{font-family:Roboto,Helvetica,Arial,sans-serif;font-size:12.5px;fill:#222222}
+.h{font-size:13.5px;font-weight:600} .H{font-size:15px;font-weight:600}
+.s{font-size:11.5px;fill:#555555} .m{text-anchor:middle} .e{text-anchor:end}
+.cb{fill:#3b5bdb} .co{fill:#c2410c} .cg{fill:#6b7280} .w{font-weight:600}
+.box{fill:#fff;stroke-width:1.6} .b{stroke:#3b5bdb} .o{stroke:#c2410c} .g{stroke:#6b7280}
+.frz{fill:#eceff3;stroke:#6b7280;stroke-width:1.4}
+.lb{stroke:#3b5bdb;stroke-width:1.8;fill:none} .lo{stroke:#c2410c;stroke-width:1.8;fill:none}
+.lg{stroke:#6b7280;stroke-width:1.4;fill:none} .dash{stroke-dasharray:5 4}
+</style>
+<defs><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3b5bdb"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2410c"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker></defs>
+<rect width="960" height="455" fill="#fff"/>
+<text x="127.5" y="30" class="H m" >Stage 1: predictor</text>
+<rect x="20" y="48" width="215" height="26" rx="4" class="box b"/>
+<text x="30" y="65" class="" >A  predictor f<tspan dy="3" font-size="9">θ</tspan></text>
+<text x="227" y="65" class="s e w cb" >train</text>
+<rect x="20" y="82" width="215" height="26" rx="4" class="box g dash"/>
+<text x="30" y="99" class="" >B  LoRA + trunk</text>
+<text x="227" y="99" class="s e w cg" >unused</text>
+<rect x="20" y="116" width="215" height="26" rx="4" class="box g dash"/>
+<text x="30" y="133" class="" >C  readout h<tspan dy="3" font-size="9">ψ</tspan></text>
+<text x="227" y="133" class="s e w cg" >unused</text>
+<rect x="20" y="150" width="215" height="26" rx="4" class="box g dash"/>
+<text x="30" y="167" class="" >D  gate</text>
+<text x="227" y="167" class="s e w cg" >unused</text>
+<text x="20" y="204" class="s w" >data</text>
+<text x="28" y="220" class="s" >DROID-3D + RoboTwin 2.0</text>
+<text x="28" y="235" class="s" >2D tracks, FK, no 3D labels</text>
+<text x="20" y="262" class="s w" >loss</text>
+<text x="28" y="278" class="s" >reprojection NLL</text>
+<text x="28" y="293" class="s" >+ ARAP + FK anchor</text>
+<text x="364.5" y="30" class="H m" >Stage 2: renderer</text>
+<rect x="257" y="48" width="215" height="26" rx="4" class="frz"/>
+<text x="267" y="65" class="" >A  predictor f<tspan dy="3" font-size="9">θ</tspan></text>
+<text x="464" y="65" class="s e w cg" >frozen</text>
+<rect x="257" y="82" width="215" height="26" rx="4" class="box o"/>
+<text x="267" y="99" class="" >B  LoRA + trunk</text>
+<text x="464" y="99" class="s e w co" >train</text>
+<rect x="257" y="116" width="215" height="26" rx="4" class="box g dash"/>
+<text x="267" y="133" class="" >C  readout h<tspan dy="3" font-size="9">ψ</tspan></text>
+<text x="464" y="133" class="s e w cg" >unused</text>
+<rect x="257" y="150" width="215" height="26" rx="4" class="box g dash"/>
+<text x="267" y="167" class="" >D  gate</text>
+<text x="464" y="167" class="s e w cg" >unused</text>
+<text x="257" y="204" class="s w" >data</text>
+<text x="265" y="220" class="s" >same clips, conditions</text>
+<text x="265" y="235" class="s" >rendered from stage-1 states</text>
+<text x="257" y="262" class="s w" >loss</text>
+<text x="265" y="278" class="s" >flow matching</text>
+<text x="265" y="293" class="s" >per-block cond. dropout</text>
+<text x="601.5" y="30" class="H m" >Stage 3: readout</text>
+<rect x="494" y="48" width="215" height="26" rx="4" class="box g dash"/>
+<text x="504" y="65" class="" >A  predictor f<tspan dy="3" font-size="9">θ</tspan></text>
+<text x="701" y="65" class="s e w cg" >unused</text>
+<rect x="494" y="82" width="215" height="26" rx="4" class="frz"/>
+<text x="504" y="99" class="" >B  LoRA + trunk</text>
+<text x="701" y="99" class="s e w cg" >frozen</text>
+<rect x="494" y="116" width="215" height="26" rx="4" class="box o"/>
+<text x="504" y="133" class="" >C  readout h<tspan dy="3" font-size="9">ψ</tspan></text>
+<text x="701" y="133" class="s e w co" >train</text>
+<rect x="494" y="150" width="215" height="26" rx="4" class="box g dash"/>
+<text x="504" y="167" class="" >D  gate</text>
+<text x="701" y="167" class="s e w cg" >unused</text>
+<text x="494" y="204" class="s w" >data</text>
+<text x="502" y="220" class="s" >pseudo 3D tracks (ST-V2,</text>
+<text x="502" y="235" class="s" >TrackCraft3R), metric via DROID-3D</text>
+<text x="494" y="262" class="s w" >loss</text>
+<text x="502" y="278" class="s" >NLL + BCE(v)</text>
+<text x="502" y="293" class="s" >+ 2D reprojection</text>
+<text x="838.5" y="30" class="H m" >Stage 4: closed loop</text>
+<rect x="731" y="48" width="215" height="26" rx="4" class="box b"/>
+<text x="741" y="65" class="" >A  predictor f<tspan dy="3" font-size="9">θ</tspan></text>
+<text x="938" y="65" class="s e w cb" >train</text>
+<rect x="731" y="82" width="215" height="26" rx="4" class="box o"/>
+<text x="741" y="99" class="" >B  LoRA + trunk</text>
+<text x="938" y="99" class="s e w co" >train</text>
+<rect x="731" y="116" width="215" height="26" rx="4" class="box o"/>
+<text x="741" y="133" class="" >C  readout h<tspan dy="3" font-size="9">ψ</tspan></text>
+<text x="938" y="133" class="s e w co" >train</text>
+<rect x="731" y="150" width="215" height="26" rx="4" class="box b"/>
+<text x="741" y="167" class="" >D  gate</text>
+<text x="938" y="167" class="s e w cb" >train</text>
+<text x="731" y="204" class="s w" >data</text>
+<text x="739" y="220" class="s" >N-chunk unrolls</text>
+<text x="739" y="235" class="s" >+ never-executed actions a′</text>
+<text x="731" y="262" class="s w" >loss</text>
+<text x="739" y="278" class="s" >L<tspan dy="3" font-size="9">track</tspan><tspan dy="-3"> + λ₁L</tspan><tspan dy="3" font-size="9">corr</tspan><tspan dy="-3"> + λ₂ agree</tspan></text>
+<text x="739" y="293" class="s" >+ λ₃L<tspan dy="3" font-size="9">cf</tspan><tspan dy="-3"> (backbone frozen)</tspan></text>
+<line x1="20" y1="312" x2="940" y2="312" stroke="#ddd"/>
+<text x="20" y="332" class="h" >Stage 4 in detail: unroll the loop, supervise both directions, teach counterfactuals</text>
+<rect x="40" y="356" width="62" height="32" rx="4" class="box b"/>
+<text x="71" y="377" class="m h" >S<tspan dy="3" font-size="9">0</tspan></text>
+<path d="M102,372 L213,372" class="lb" marker-end="url(#ab)"/>
+<text x="158.5" y="364" class="s m" >f → g → h → F</text>
+<rect x="215" y="356" width="62" height="32" rx="4" class="box b"/>
+<text x="246" y="377" class="m h" >S<tspan dy="3" font-size="9">1</tspan></text>
+<path d="M277,372 L388,372" class="lb" marker-end="url(#ab)"/>
+<text x="333.5" y="364" class="s m" >f → g → h → F</text>
+<rect x="390" y="356" width="62" height="32" rx="4" class="box b"/>
+<text x="421" y="377" class="m h" >S<tspan dy="3" font-size="9">2</tspan></text>
+<path d="M452,372 L563,372" class="lb" marker-end="url(#ab)"/>
+<text x="508.5" y="364" class="s m" >f → g → h → F</text>
+<rect x="565" y="356" width="62" height="32" rx="4" class="box b"/>
+<text x="596" y="377" class="m h" >S<tspan dy="3" font-size="9">3</tspan></text>
+<text x="660" y="377" class="h" >…</text>
+<text x="40" y="408" class="s" >L<tspan dy="3" font-size="9">track</tspan><tspan dy="-3">: fused state reprojected onto real 2D tracks (no 3D labels)</tspan></text>
+<text x="40" y="424" class="s" >L<tspan dy="3" font-size="9">corr</tspan><tspan dy="-3">: fused state reprojected onto the generated frames (action faithfulness)</tspan></text>
+<text x="40" y="440" class="s" >agree: ‖μ<tspan dy="3" font-size="9">f</tspan><tspan dy="-3"> − sg(μ</tspan><tspan dy="3" font-size="9">h</tspan><tspan dy="-3">)‖² on visible points; gradients on the video side reach LoRA, trunk, readout, gate only</tspan></text>
+<rect x="720" y="340" width="220" height="60" rx="4" class="box o"/>
+<text x="830" y="360" class="m" >teacher: g<tspan dy="3" font-size="9">φ</tspan><tspan dy="-3"> in robot-only mode</tspan></text>
+<text x="830" y="376" class="m s" >skin dropped, URDF render of a′</text>
+<text x="830" y="391" class="m s" >imagines the scene response to a′</text>
+<path d="M720,372 L700,372" class="lo" marker-end="url(#ao)"/>
+<text x="698" y="376" class="s e co w" >L<tspan dy="3" font-size="9">cf</tspan></text>
+</svg>
