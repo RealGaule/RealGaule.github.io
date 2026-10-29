@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AeroThread</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #05070a;
+    color: #f4f2ea;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  #wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    background: #000;
+  }
+  #cv {
+    position: absolute;
+    display: block;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .panel {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    display: none;
+    z-index: 10;
+    padding: 36px 42px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    background: rgba(5, 7, 10, 0.88);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .panel.active { display: flex; }
+  h1 { margin: 0 0 10px; font-size: 40px; color: #7ce3ff; }
+  .goal { max-width: 700px; font-size: 17px; line-height: 1.5; color: #ddd7cb; margin: 0 0 18px; }
+  .panel h2 { font-size: 20px; margin: 14px 0 6px; color: #ffd98a; }
+  .panel ul { margin: 0 0 8px; padding-left: 22px; font-size: 15px; line-height: 1.6; color: #d9d4c8; text-align: left; }
+  .panel li { margin: 3px 0; }
+  .panel button { font: 600 16px inherit; color: #10202f; border: none; border-radius: 10px; margin: 12px 6px 0; padding: 12px 26px; background: #7ce3ff; cursor: pointer; touch-action: manipulation; }
+  .panel button:active { transform: translateY(1px); }
+  #end h2 { font-size: 34px; margin: 0 0 6px; }
+  .scores { font-size: 18px; color: #d9d4c8; margin: 4px 0 14px; }
+  .best-row { margin: 14px 0 0; font-size: 15px; color: #b9c4bd; }
+  #start { z-index: 10; }
+  #pause { z-index: 20; gap: 18px; }
+  #end { z-index: 30; gap: 12px; }
+  #selftest {
+    display: block;
+    margin: 10px auto;
+    max-width: 640px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #0a0e14;
+    color: #cfe6d8;
+    font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border: 1px solid #26333f;
+  }
+  @media (max-width: 699px) {
+    .panel { padding: 18px 16px; }
+    h1 { font-size: 30px; }
+    .goal { font-size: 14.5px; line-height: 1.45; margin: 0 0 12px; }
+    .panel h2 { font-size: 15px; margin: 10px 0 4px; }
+    .panel ul { font-size: 12.5px; line-height: 1.45; }
+    .panel li { margin: 2px 0; }
+    .panel button { font-size: 14px; margin: 10px 4px 0; padding: 10px 20px; }
+    #end h2 { font-size: 26px; }
+    .scores { font-size: 16px; }
+    .best-row { font-size: 13px; }
+    #selftest { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <div id="start" class="panel active">
+    <h1>AeroThread</h1>
+    <p class="goal">Hold to climb, release to drop, then thread the courier drone cleanly through 20 sliding gates and land on the pad after the last gate. Score one point per gate plus one for a near-centre pass.</p>
+    <div style="display:flex; gap:28px; justify-content:center; flex-wrap:wrap; max-width:660px;">
+      <div>
+        <h2>Keyboard</h2>
+        <ul>
+          <li><strong>Space</strong> or <strong>ArrowUp</strong>: hold to thrust up, release to stop</li>
+          <li><strong>Enter</strong> or <strong>Space</strong>: start</li>
+          <li><strong>P</strong> or <strong>Esc</strong>: pause or resume</li>
+          <li><strong>M</strong>: mute or unmute</li>
+          <li><strong>R</strong>: instant restart</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Mouse or touch</h2>
+        <ul>
+          <li>Press and hold the play area to thrust</li>
+          <li>Release anywhere to stop thrust</li>
+          <li>Use the on-screen Start, Restart and Mute buttons</li>
+        </ul>
+      </div>
+    </div>
+    <p class="best-row">Best score: <span id="bestValue">0</span> / 40</p>
+    <button id="startButton" type="button">Start</button>
+  </div>
+  <div id="pause" class="panel">
+    <h2 style="color:#7ce3ff;">Paused</h2>
+    <button id="resumeButton" type="button">Resume</button>
+    <button id="restartButtonPause" type="button">Restart</button>
+    <button id="muteButtonPause" type="button">Mute</button>
+  </div>
+  <div id="end" class="panel">
+    <h2 id="endLabel"></h2>
+    <p class="scores">Score: <span id="finalScore"></span></p>
+    <p class="best-row">Best score: <span id="bestValueEnd">0</span> / 40</p>
+    <button id="restartButtonEnd" type="button">Restart</button>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Self-test error capture must precede all game code. ---------- */
+  var hashText = typeof location !== 'undefined' ? location.hash.replace(/^#/, '') : '';
+  var isSelftest = hashText === 'selftest';
+  var isDemo = hashText === 'demo';
+  var selfErrors = [];
+  var selfTimer = null;
+
+  function reportError(err) {
+    try {
+      var msg = err && err.message ? err.message : String(err);
+      if (msg) selfErrors.push(msg);
+    } catch (storageErr) { /* never break reporting */ }
+  }
+
+  window.onerror = function (msg, src, line, col, err) {
+    var text = String(msg);
+    if (src) text += ' (' + src + ':' + line + ':' + col + ')';
+    selfErrors.push(text);
+    if (err && err.stack && selfErrors.indexOf(err.stack) < 0) selfErrors.push(err.stack);
+    /* return false so the runtime error is not silently swallowed; the
+       self-test still records it in selfErrors. */
+    return false;
+  };
+  window.addEventListener('unhandledrejection', function (event) {
+    reportError(event && event.reason ? event.reason : 'unhandledrejection');
+  });
+  if (isSelftest) {
+    console.error = function (parts) {
+      try {
+        var msg = Array.prototype.map.call(parts, function (part) {
+          return part && part.message ? String(part.message) : String(part);
+        }).join(' ');
+        if (msg) selfErrors.push(msg);
+      } catch (ignore) { /* reporting itself must not throw */ }
+    };
+  }
+
+  /* ==========================================================================
+     AeroThread — hold thrust, release gravity, thread 20 gates, land.
+     ========================================================================== */
+
+  var W = 880;
+  var H = 576;
+  var DRONE_X = 299.2;
+  var DRONE_Y0 = 327;
+  var DRONE_R = 9;
+  var GRAV = 0.30;
+  var THRUST_A = -0.81;
+  var HELD_A = -0.51;
+  var VMAX = 4.6;
+  var DT = 1 / 60;
+
+  var GAP_BASE_Y = 324;
+  var PAD_Y = 324;
+  var PAD_BAND = 39;
+
+  var ZONES = [
+    { field: '#061220', haze: '#e8c9a0', gate: '#4ae0ff', accent: '#6fffa0', maxOpen: 294 },
+    { field: '#04130f', haze: '#d9a15b', gate: '#ffb83c', accent: '#8be2a4', maxOpen: 252 },
+    { field: '#051804', haze: '#cdeeb6', gate: '#d0ff4d', accent: '#76efa0', maxOpen: 210 },
+    { field: '#0c061a', haze: '#e6b3c6', gate: '#ff6ea8', accent: '#a48ef0', maxOpen: 174 },
+    { field: '#0a0504', haze: '#e8a26a', gate: '#ff5a1f', accent: '#ff9f4d', maxOpen: 150 }
+  ];
+  var ZONE_SPACING = [178, 182, 190, 200, 208];
+  var ZONE_CD = [0.06, 0.18, 0.30, 0.42, 0.48];
+  var ZONE_P = [10.0, 7.5, 5.0, 4.0, 3.0];
+  var ZONE_DRIFT = [0, 12, 15, 18, 21];
+  var ZONE_PHI = [0, 0.8, 1.6, 2.4, 3.1];
+  var ZONE_VX = [1.55, 1.75, 1.95, 2.15, 2.35];
+  var DRIFT_P = 4.0;
+  var GATE_BASE = 288;
+  var GATE_X = [];
+  var TWO_PI = Math.PI * 2;
+
+  /* ---------- Responsive viewport mapping ---------- */
+  /* The logical world stays 880x576. All drawing uses view-local world
+     coordinates: local = world - (drone.worldX - viewAnchor). On portrait
+     screens the canvas is scaled to full height and the world is cropped on
+     the sides, so the drone anchor and the HUD are kept inside the view. */
+  var viewAnchor = DRONE_X;
+  var scale = 1;
+  var viewW = W;
+  var cropped = false;
+
+  var canvas = document.getElementById('cv');
+  var ctx = canvas.getContext('2d');
+
+  var state = 'title';
+  var endLabel = '';
+  var zoneIdx = 1;
+  var simTime = 0;
+
+  var drone = { worldX: 64, y: DRONE_Y0, vx: ZONE_VX[0], vy: 0 };
+  var thrust = false;
+  var gatesPassed = 0;
+  var score = 0;
+  var perfectCount = 0;
+  var nextGateIndex = 0;
+  var activeGates = [];
+  var landing = null;
+  var contrail = [];
+  var muted = false;
+
+  var bestScore = 0;
+  var scoreChangedDuringSelftest = false;
+
+  /* WebAudio: never created in self-test or demo mode. */
+  var audioCtx = null;
+  var masterGain = null;
+  var humOsc = null;
+  var humGain = null;
+  var humFilter = null;
+
+  function zoneForGate(n) {
+    return Math.max(1, Math.min(5, Math.ceil(n / 4)));
+  }
+
+  for (var i = 1; i <= 20; i++) {
+    GATE_X.push(i === 1 ? GATE_BASE : GATE_X[i - 2] + ZONE_SPACING[zoneForGate(i - 1) - 1]);
+  }
+
+  function gateAtTime(n, tSeconds) {
+    var z = zoneForGate(n) - 1;
+    var phi = ((n * 0.3931) + ZONE_PHI[z]) % TWO_PI;
+    var yc = GAP_BASE_Y + (((n * 31) % 41) - 20) + ZONE_DRIFT[z] * Math.sin(TWO_PI * tSeconds / DRIFT_P + phi);
+    var f = 0.5 + 0.5 * Math.sin(TWO_PI * tSeconds / ZONE_P[z] + phi);
+    var h = (ZONES[z].maxOpen / 2) * (1 - ZONE_CD[z] + ZONE_CD[z] * f);
+    var gx = GATE_X[n - 1];
+    return {
+      n: n, gx: gx, yc: yc, h: h,
+      top: yc - h, bottom: yc + h,
+      left: gx - 10, right: gx + 10, front: gx + 10, back: gx - 10
+    };
+  }
+
+  function shade(color, frac) {
+    var n = parseInt(color.slice(1), 16);
+    return 'rgb(' + Math.round(((n >> 16) & 255) * frac) + ',' +
+      Math.round(((n >> 8) & 255) * frac) + ',' +
+      Math.round((n & 255) * frac) + ')';
+  }
+
+  function localX(worldX) {
+    return worldX - (drone.worldX - viewAnchor);
+  }
+
+  function readBest() {
+    try {
+      var v = localStorage.getItem('aerothread.best');
+      var n = Number(v);
+      if (!isFinite(n) || n <= 0) return 0;
+      return n;
+    } catch (err) { return 0; }
+  }
+
+  function saveBest() {
+    try { localStorage.setItem('aerothread.best', String(bestScore)); } catch (err) { /* best stays 0 */ }
+  }
+
+  function updateBest() {
+    if (score > bestScore) bestScore = score;
+  }
+
+  /* ------------------------------- Audio -------------------------------- */
+  function startThrustHum() {
+    if (isSelftest || isDemo || !audioCtx || humOsc || !thrust) return;
+    try {
+      humOsc = audioCtx.createOscillator();
+      humGain = audioCtx.createGain();
+      humFilter = audioCtx.createBiquadFilter();
+      humOsc.type = 'triangle';
+      humOsc.frequency.value = 15 + (zoneIdx - 1) * 5;
+      humFilter.type = 'bandpass';
+      humFilter.frequency.value = 1200;
+      humFilter.Q.value = 9;
+      humGain.gain.value = 0.007;
+      humOsc.connect(humFilter);
+      humFilter.connect(humGain);
+      humGain.connect(masterGain);
+      humOsc.start();
+    } catch (err) { humOsc = null; }
+  }
+
+  function stopThrustHum() {
+    if (!humOsc) return;
+    try { humOsc.stop(); } catch (err) { /* may already be stopped */ }
+    humOsc = null;
+    humGain = null;
+    humFilter = null;
+  }
+
+  function ensureAudio() {
+    if (isSelftest || isDemo) return;
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+        masterGain.gain.value = muted ? 0 : 1;
+        if (thrust) startThrustHum();
+      }
+      audioCtx.resume();
+    } catch (err) { /* audio remains unavailable; play carries on */ }
+  }
+
+  function setMuted(value) {
+    muted = !!value;
+    if (masterGain) masterGain.gain.value = muted ? 0 : 1;
+    updateMuteUI();
+  }
+
+  function toggleMute() {
+    setMuted(!muted);
+  }
+
+  function tone(freq, seconds, volume) {
+    if (!audioCtx || !masterGain || muted) return;
+    try {
+      var when = audioCtx.currentTime;
+      var carrier = audioCtx.createOscillator();
+      var mod = audioCtx.createOscillator();
+      var modGain = audioCtx.createGain();
+      var out = audioCtx.createGain();
+      carrier.type = 'sine';
+      mod.type = 'sine';
+      carrier.frequency.value = freq;
+      mod.frequency.value = freq * 2;
+      modGain.gain.value = 0.3;
+      mod.connect(modGain);
+      modGain.connect(carrier.frequency);
+      out.gain.setValueAtTime(0.0001, when);
+      out.gain.linearRampToValueAtTime(volume || 0.14, when + 0.012);
+      out.gain.exponentialRampToValueAtTime(0.0001, when + seconds);
+      carrier.connect(out);
+      out.connect(masterGain);
+      carrier.start(when);
+      mod.start(when);
+      carrier.stop(when + seconds + 0.06);
+      mod.stop(when + seconds + 0.06);
+    } catch (err) { /* optional sound cannot break the game */ }
+  }
+
+  function bellPerfect() {
+    if (!audioCtx || muted) return;
+    try {
+      var when = audioCtx.currentTime;
+      [659, 932, 1319].forEach(function (freq) {
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, when);
+        osc.frequency.exponentialRampToTime(0.10, when + 0.015);
+        g.gain.setValueAtTime(0.0001, when);
+        g.gain.exponentialRampToTime(0.0001, when + 0.18);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(when);
+        osc.stop(when + 0.2);
+      });
+    } catch (err) { /* ignore */ }
+  }
+
+  function chordWin() {
+    if (!audioCtx || muted) return;
+    try {
+      var when = audioCtx.currentTime;
+      [523.25, 659.26, 783.99, 1046.5].forEach(function (freq) {
+        var osc = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, when);
+        g.gain.linearRampToValueAtTime(0.11, when + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + 0.42);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(when);
+        osc.stop(when + 0.48);
+      });
+    } catch (err) { /* ignore */ }
+  }
+
+  function thud() {
+    tone(84, 0.34, 0.18);
+  }
+
+  /* ------------------------------- State -------------------------------- */
+  function refreshScreens() {
+    var startEl = document.getElementById('start');
+    var pauseEl = document.getElementById('pause');
+    var endEl = document.getElementById('end');
+    startEl.classList.toggle('active', state === 'title');
+    pauseEl.classList.toggle('active', state === 'paused');
+    endEl.classList.toggle('active', state === 'gameover' || state === 'win');
+    updateMuteUI();
+  }
+
+  function updateMuteUI() {
+    var labels = document.querySelectorAll('#muteButtonPause, #bestValue, #bestValueEnd');
+    for (var i = 0; i < labels.length; i++) {
+      var el = labels[i];
+      if (el.id === 'bestValue') { el.textContent = String(bestScore); continue; }
+      if (el.id === 'bestValueEnd') { el.textContent = String(bestScore); continue; }
+      el.textContent = muted ? 'Unmute' : 'Mute';
+    }
+  }
+
+  function setGameOver(label) {
+    state = 'gameover';
+    endLabel = label || 'Crashed';
+    thrust = false;
+    stopThrustHum();
+    thud();
+    updateBest();
+    saveBest();
+    var finalEl = document.getElementById('finalScore');
+    var endLabelEl = document.getElementById('endLabel');
+    if (finalEl) finalEl.textContent = String(score);
+    if (endLabelEl) endLabelEl.textContent = endLabel;
+    refreshScreens();
+  }
+
+  function setWin() {
+    state = 'win';
+    drone.y = PAD_Y;
+    endLabel = 'Landed';
+    thrust = false;
+    stopThrustHum();
+    updateBest();
+    saveBest();
+    chordWin();
+    var finalEl = document.getElementById('finalScore');
+    var endLabelEl = document.getElementById('endLabel');
+    if (finalEl) finalEl.textContent = String(score);
+    if (endLabelEl) endLabelEl.textContent = endLabel;
+    refreshScreens();
+  }
+
+  function startFromTitle(fromSpace) {
+    if (state !== 'title') return;
+    state = 'playing';
+    if (fromSpace) {
+      ensureAudio();
+      setThrust(true);
+    }
+    refreshScreens();
+    if (canvas && ctx) render();
+  }
+
+  function setThrust(on) {
+    thrust = !!on;
+    if (on) { ensureAudio(); startThrustHum(); } else stopThrustHum();
+  }
+
+  function setThrustOn() { setThrust(true); }
+  function setThrustOff() { setThrust(false); }
+
+  function togglePause() {
+    if (isSelftest || isDemo) return;
+    if (state === 'playing') setPaused(true);
+    else if (state === 'paused') setPaused(false);
+  }
+
+  function setPaused(p) {
+    if (isSelftest || isDemo) return;
+    state = p ? 'paused' : 'playing';
+    blip(p ? 430 : 640);
+    refreshScreens();
+  }
+
+  function blip(freq) {
+    tone(freq, 0.07, 0.06);
+  }
+
+  function restartGame() {
+    activeGates.length = 0;
+    nextGateIndex = 0;
+    gatesPassed = 0;
+    score = 0;
+    perfectCount = 0;
+    zoneIdx = 1;
+    simTime = 0;
+    drone.worldX = 64;
+    drone.y = DRONE_Y0;
+    drone.vx = 0;
+    drone.vy = 0;
+    thrust = false;
+    landing = null;
+    contrail.length = 0;
+    botCommit.length = 0;
+    botCommitSig = '';
+    state = 'playing';
+    stopThrustHum();
+    refreshScreens();
+    if (canvas && ctx) render();
+  }
+
+  /* ------------------------------- Physics ------------------------------ */
+  function fixedStep() {
+    if (state !== 'playing') return false;
+    if (isSelftest) selfTestTicks++;
+
+    drone.vx = ZONE_VX[Math.min(5, Math.max(1, zoneIdx)) - 1];
+
+    while (activeGates.length < 2 && nextGateIndex < 20) {
+      nextGateIndex++;
+      activeGates.push({ n: nextGateIndex, gx: GATE_X[nextGateIndex - 1], front: GATE_X[nextGateIndex - 1] + 10 });
+    }
+
+    var oldX = drone.worldX;
+    var accel = thrust ? HELD_A : GRAV;
+    drone.vy += accel;
+    if (drone.vy > VMAX) drone.vy = VMAX;
+    if (drone.vy < -VMAX) drone.vy = -VMAX;
+    drone.y += drone.vy;
+    drone.worldX += drone.vx;
+    simTime += DT;
+
+    if (drone.y - DRONE_R <= 0) { setGameOver('Crunched'); return true; }
+    if (drone.y + DRONE_R >= H) { setGameOver('Crashed'); return true; }
+
+    for (var gi = 0; gi < activeGates.length; gi++) {
+      var rect = gateAtTime(activeGates[gi].n, simTime);
+      if (circleHitsRect(drone.worldX, drone.y, DRONE_R, rect.left, 0, 20, rect.top)) {
+        setGameOver('Crashed');
+        return true;
+      }
+      if (circleHitsRect(drone.worldX, drone.y, DRONE_R, rect.left, rect.bottom, 20, H - rect.bottom)) {
+        setGameOver('Crashed');
+        return true;
+      }
+    }
+
+    for (var pi = 0; pi < activeGates.length && state === 'playing'; pi++) {
+      var g = activeGates[pi];
+      if (oldX <= g.front && drone.worldX > g.front) {
+        var moved = drone.worldX - oldX;
+        var frac = moved > 0 ? Math.min(1, Math.max(0, (g.front - oldX) / moved)) : 1;
+        var crossT = simTime - DT + frac * DT;
+        var p = gateAtTime(g.n, crossT);
+        activeGates.splice(pi, 1);
+
+        if (Math.abs(drone.y - p.yc) <= p.h - DRONE_R) {
+          score++;
+          gatesPassed++;
+          scoreChangedDuringSelftest = true;
+          blipPass(g.n);
+          var clearGap = 2 * p.h;
+          var perfectBand = Math.max(10, Math.min(22, 0.18 * clearGap));
+          if (Math.abs(drone.y - p.yc) <= perfectBand) {
+            score++;
+            perfectCount++;
+            bellPerfect();
+          }
+          zoneIdx = zoneForGate(p.n);
+          if (p.n === 20) landing = { frontX: GATE_X[19] + 230, checked: false };
+        } else {
+          setGameOver('Crashed');
+        }
+        break;
+      }
+    }
+
+    if (state === 'playing' && landing && !landing.checked && oldX <= landing.frontX && drone.worldX > landing.frontX) {
+      landing.checked = true;
+      if (Math.abs(drone.y - PAD_Y) <= PAD_BAND) setWin();
+      else setGameOver('Missed landing');
+    }
+    return state !== 'playing';
+  }
+
+  function circleHitsRect(cx, cy, r, rx, ry, rw, rh) {
+    var dx = 0;
+    if (cx < rx) dx = rx - cx;
+    else if (cx > rx + rw) dx = cx - rx - rw;
+    var dy = 0;
+    if (cy < ry) dy = ry - cy;
+    else if (cy > ry + rh) dy = cy - ry - rh;
+    return dx * dx + dy * dy <= r * r;
+  }
+
+  function blipPass(gateNumber) {
+    tone(320 + gateNumber * 18, 0.14, 0.10);
+  }
+
+  /* ------------------------------- Bot ----------------------------------
+     The bot may only act through setThrust(true/false). It never edits the
+     score, the gate counter, positions, or collisions.
+
+     Physics note: holding thrust applies HELD_A (-0.51 px/step^2) and
+     releasing applies GRAV (+0.30). Hovering therefore needs a periodic
+     duty cycle of roughly 0.37 ON. Constant thrust just climbs into the
+     ceiling and a single thrust switch just delays the fall, so the bot
+     simulates a set of candidate thrust schedules — constants, single
+     switches, and *periodic duty patterns* — over a horizon that reaches
+     the next gate (or the landing pad). It commits a short prefix of the
+     winning schedule, re-planning every few steps as the gate movement and
+     the drone state evolve. The committed remainder is bot-internal state
+     only; every actuation still goes through setThrust. */
+  var SWITCH_STEPS = [2, 3, 4, 5, 6, 7, 8, 10, 13, 17, 22, 28, 35, 44, 60, 80, 120, 170];
+  var PERIOD_PATTERNS = [[5, 2], [6, 2], [7, 2], [7, 3], [8, 3], [9, 3], [10, 3], [10, 4], [11, 4], [12, 4], [13, 5], [16, 6]];
+  var botCommit = [];
+  var botCommitSig = '';
+
+  function nextGateForBot() {
+    for (var i = 0; i < activeGates.length; i++) {
+      if (activeGates[i].n > gatesPassed) return activeGates[i];
+    }
+    return null;
+  }
+
+  function currentForwardSpeed() {
+    var v = drone.vx;
+    if (!isFinite(v) || v <= 0.001) v = ZONE_VX[Math.max(1, Math.min(5, zoneIdx)) - 1];
+    return v;
+  }
+
+  function planningTarget() {
+    var vx = currentForwardSpeed();
+    if (!isFinite(vx) || vx <= 0.0001) vx = ZONE_VX[0];
+    if (gatesPassed >= 20 && landing) {
+      var frontStepsPad = Math.max(1, Math.ceil((landing.frontX - drone.worldX) / vx));
+      return {
+        kind: 'pad',
+        reachSteps: Math.max(1, frontStepsPad - 8),
+        frontSteps: frontStepsPad,
+        sig: 'pad'
+      };
+    }
+    var g = nextGateForBot();
+    if (!g) return null;
+    var reachStepsG = Math.max(1, Math.ceil((g.gx - 10 - drone.worldX) / vx));
+    var frontStepsG = Math.max(1, Math.ceil((g.front - drone.worldX) / vx));
+    return {
+      kind: 'gate',
+      n: g.n,
+      reachSteps: reachStepsG,
+      frontSteps: frontStepsG,
+      sig: 'gate:' + g.n
+    };
+  }
+
+  function controllerTick(crashOnly) {
+    if (state !== 'playing') return;
+    if (crashOnly) { setThrustOff(); return; }
+
+    if (botCommit.length > 0) {
+      setThrust(botCommit.shift());
+      return;
+    }
+
+    var target = planningTarget();
+    if (!target || !botCommitSigCheck(target)) {
+      botCommitSig = target ? target.sig : '';
+      if (!target) { setThrustOff(); return; }
+    } else {
+      botCommitSig = target.sig;
+    }
+
+    var horizon = Math.max(8, Math.min(target.frontSteps + 4, 150));
+    var bandA = Math.max(1, target.reachSteps - 8);
+    var sFinal = Math.max(1, Math.min(horizon, target.frontSteps));
+
+    /* Precompute the exact target trajectory the game equations will
+       produce at every simulated step, so every candidate shares it. */
+    var ys = new Array(horizon + 1);
+    var hs = new Array(horizon + 1);
+    if (target.kind === 'gate') {
+      for (var s = 1; s <= horizon; s++) {
+        var gp = gateAtTime(target.n, simTime + s * DT);
+        ys[s] = gp.yc;
+        hs[s] = Math.max(0.25, gp.h - DRONE_R);
+      }
+    } else {
+      for (var sp = 1; sp <= horizon; sp++) {
+        ys[sp] = PAD_Y;
+        hs[sp] = PAD_BAND;
+      }
+    }
+
+    function buildConst(v) {
+      var a = new Array(horizon + 1);
+      for (var i = 0; i <= horizon; i++) a[i] = v;
+      return a;
+    }
+    var cands = [buildConst(true), buildConst(false)];
+    for (var k = 0; k < SWITCH_STEPS.length; k++) {
+      var sw = SWITCH_STEPS[k];
+      if (sw > 0 && sw < horizon) {
+        var sOn = new Array(horizon + 1);
+        var sOn2 = new Array(horizon + 1);
+        for (var i = 1; i <= horizon; i++) {
+          sOn[i] = i <= sw;
+          sOn2[i] = i > sw;
+        }
+        cands.push(sOn, sOn2);
+      }
+    }
+    for (var pi = 0; pi < PERIOD_PATTERNS.length; pi++) {
+      var per = PERIOD_PATTERNS[pi][0];
+      var onPer = PERIOD_PATTERNS[pi][1];
+      for (var offi = 0; offi < 2; offi++) {
+        var off = offi === 0 ? 0 : Math.floor(per / 2);
+        var seq = new Array(horizon + 1);
+        for (var si = 1; si <= horizon; si++) seq[si] = ((si - 1 + off) % per) < onPer;
+        cands.push(seq);
+      }
+    }
+
+    var bestSeq = cands[0];
+    var bestCost = Infinity;
+
+    function costOf(seq) {
+      var y = drone.y;
+      var vy = drone.vy;
+      var c = 0;
+      var topLim = DRONE_R + 12;
+      var botLim = H - DRONE_R - 12;
+      for (var s = 1; s <= horizon; s++) {
+        vy += seq[s] ? HELD_A : GRAV;
+        if (vy > VMAX) vy = VMAX;
+        if (vy < -VMAX) vy = -VMAX;
+        y += vy;
+        if (y < topLim) c += 90 + (topLim - y) * 3;
+        if (y > botLim) c += 90 + (y - botLim) * 3;
+        var dy = Math.abs(y - ys[s]);
+        if (s >= bandA) {
+          var out = dy - hs[s];
+          c += out > 0 ? 5200 + out * 24 : dy * 0.45;
+        } else {
+          var softOut = dy - (hs[s] + 40);
+          if (softOut > 0) c += softOut * 0.5;
+        }
+      }
+      var dF = Math.abs(y - ys[sFinal]);
+      var hF = hs[sFinal];
+      c += dF > hF ? 7200 + (dF - hF) * 30 : dF * 1.1;
+      return c;
+    }
+
+    for (var ci = 0; ci < cands.length; ci++) {
+      var cst = costOf(cands[ci]);
+      if (cst < bestCost) {
+        bestCost = cst;
+        bestSeq = cands[ci];
+      }
+    }
+
+    var commitLen = Math.max(3, Math.min(12, horizon));
+    setThrust(!!bestSeq[1]);
+    botCommit.length = 0;
+    for (var ci2 = 2; ci2 <= commitLen + 1 && ci2 <= horizon; ci2++) {
+      botCommit.push(!!bestSeq[ci2]);
+    }
+  }
+
+  function botCommitSigCheck(target) {
+    /* Always re-solve when the target changed, and solve afresh whenever
+       the board is empty; otherwise the (possibly empty) commit queue
+       decides. */
+    return botCommitSig === target.sig;
+  }
+
+  /* ------------------------------- Render ------------------------------- */
+  function fillRoundRect(x, y, w, h, r, color) {
+    if (w <= 0 || h <= 0) return;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawParallax(zone) {
+    var off = drone.worldX - viewAnchor;
+    var far = ((off * 0.10 + 320) % (W + 80) + (W + 80)) % (W + 80) - 40;
+    var near = ((off * 0.55 + 430) % (W + 60) + (W + 60)) % (W + 60) - 30;
+    ctx.fillStyle = zone.field;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = zone.haze;
+    ctx.globalAlpha = 0.08;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = 'rgba(8, 16, 26, 0.28)';
+    for (var fy = 18; fy < H; fy += 46) {
+      var fx = ((off * 0.12 + fy * 29 - far) % (W + 80) + (W + 80)) % (W + 80) - 40;
+      ctx.fillRect(fx, fy, 120, 8);
+    }
+    ctx.fillStyle = 'rgba(8, 16, 26, 0.46)';
+    for (var ny = 2; ny < H; ny += 52) {
+      var nxs = ((off * 0.60 + ny * 37 - near) % (W + 60) + (W + 60)) % (W + 60) - 30;
+      ctx.fillRect(nxs, ny, 64, 5);
+    }
+  }
+
+  function drawGateWorld(g, zone) {
+    var rect = gateAtTime(g.n, simTime);
+    var sx = localX(rect.gx);
+    if (sx < -22 || sx > W + 2) return;
+    var gt = Math.max(0, rect.top);
+    var gb = Math.min(H, rect.bottom);
+    var core = shade(zone.gate, 0.42);
+    var openFrac = Math.max(0, Math.min(1, rect.h / (zone.maxOpen / 2)));
+    /* soft glow marks the passable opening */
+    ctx.shadowColor = zone.gate;
+    ctx.shadowBlur = 14;
+    ctx.globalAlpha = 0.16 + 0.34 * openFrac;
+    ctx.fillStyle = zone.gate;
+    ctx.fillRect(sx - 10, gt - 2, 20, Math.max(2, gb - gt + 4));
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    /* solid door halves: dark body with a bright inner core */
+    fillRoundRect(sx - 10, 0, 20, Math.max(0, gt), 3, core);
+    fillRoundRect(sx - 10, gb, 20, Math.max(0, H - gb), 3, core);
+    ctx.fillStyle = zone.gate;
+    if (gt > 6) ctx.fillRect(sx - 4, 2, 8, gt - 6);
+    if (H - gb > 6) ctx.fillRect(sx - 4, gb + 4, 8, H - gb - 6);
+    /* dark rims along the opening edges */
+    ctx.fillStyle = 'rgba(2, 4, 8, 0.92)';
+    if (gt > 1) ctx.fillRect(sx - 10, Math.max(0, gt - 2), 20, 2);
+    if (gb < H - 1) ctx.fillRect(sx - 10, Math.min(gb, H - 2), 20, 2);
+    /* the open gap reads as an empty hole */
+    if (gb > gt) {
+      ctx.fillStyle = 'rgba(3, 5, 9, 0.60)';
+      ctx.fillRect(sx - 10, gt, 20, gb - gt);
+    }
+    /* bright sliding marker shows where the centre is right now */
+    ctx.fillStyle = zone.gate;
+    ctx.globalAlpha = 0.92;
+    ctx.fillRect(sx - 4.5, Math.max(0, Math.min(H - 1, rect.yc)), 9, 2);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawDrone(zone) {
+    if (state === 'title') return;
+    var cx = viewAnchor;
+    var cy = drone.y;
+    /* contrail */
+    for (var i = contrail.length - 1; i >= 0; i--) {
+      var p = contrail[i];
+      var alpha = 0.22 - (contrail.length - 1 - i) * 0.038;
+      if (alpha <= 0) { contrail.splice(i, 1); continue; }
+      var sx = localX(p.x);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = zone.gate;
+      ctx.beginPath();
+      ctx.arc(sx, p.y, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    /* soft glow keeps the drone readable against busy zones */
+    ctx.shadowColor = zone.accent;
+    ctx.shadowBlur = 16;
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = zone.gate;
+    ctx.beginPath();
+    ctx.arc(cx, cy, DRONE_R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+
+    /* rotors */
+    ctx.strokeStyle = zone.accent;
+    ctx.lineWidth = 3.6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - 14.5, cy - 5.8);
+    ctx.lineTo(cx + 14.5, cy - 5.8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - 14.5, cy + 5.8);
+    ctx.lineTo(cx + 14.5, cy + 5.8);
+    ctx.stroke();
+
+    /* crisp outer ring just outside the hit circle */
+    ctx.strokeStyle = zone.gate;
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 10.6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    /* fuselage */
+    ctx.fillStyle = zone.gate;
+    ctx.beginPath();
+    ctx.arc(cx, cy, DRONE_R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e9f6ff';
+    ctx.beginPath();
+    ctx.arc(cx + 2.5, cy - 3, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#061820';
+    ctx.beginPath();
+    ctx.arc(cx - 1, cy + 2, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawLanding(zone) {
+    if (!landing) return;
+    var padX = localX(landing.frontX);
+    ctx.shadowColor = zone.gate;
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = zone.gate;
+    ctx.globalAlpha = 0.16;
+    ctx.fillRect(padX - 150, PAD_Y - 16, 168, 32);
+    ctx.globalAlpha = 0.9;
+    ctx.fillRect(padX - 10, PAD_Y - 10, 16, 20);
+    ctx.fillStyle = zone.accent;
+    ctx.fillRect(padX - 4, PAD_Y - 6, 5, 12);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+  }
+
+  function muteRect() {
+    if (cropped) return { x: viewW - 68, y: H - 48, w: 60, h: 28 };
+    return { x: W - 90, y: 12, w: 80, h: 28 };
+  }
+
+  function drawMuteBox(rect, zone) {
+    fillRoundRect(rect.x, rect.y, rect.w, rect.h, 8, 'rgba(20, 30, 44, 0.92)');
+    var label = muted ? 'UNMUTE' : 'MUTE';
+    var fontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    /* measure and shrink the label so it always sits fully inside the box */
+    var fontSize = Math.max(7, Math.min(12, rect.h * 0.42));
+    ctx.font = '600 ' + fontSize + 'px ' + fontStack;
+    var textW = ctx.measureText(label).width;
+    while (textW > rect.w - 8 && fontSize > 7) {
+      fontSize -= 0.5;
+      ctx.font = '600 ' + fontSize + 'px ' + fontStack;
+      textW = ctx.measureText(label).width;
+    }
+    ctx.fillStyle = zone.haze;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, rect.x + (rect.w - textW) / 2, rect.y + rect.h / 2);
+    ctx.textBaseline = 'top';
+  }
+
+  function drawHUD(zone) {
+    if (cropped) {
+      var vw = viewW;
+      var gateNum = Math.min(20, gatesPassed + 1);
+      var zoneNum = Math.min(5, gatesPassed >= 20 ? 5 : zoneForGate(gatesPassed + 1));
+      var gateLabel = vw < 130 ? ('G' + gateNum + '/20') : ('GATE ' + gateNum + ' / 20');
+      var zoneLabel = vw < 130 ? ('Z' + zoneNum + '/5') : ('ZONE ' + zoneNum + ' / 5');
+      var fGate = vw < 110 ? 6 : (vw < 150 ? 7 : 8);
+      var fNum = vw < 110 ? 12 : (vw < 150 ? 13.5 : 15);
+      /* score */
+      fillRoundRect(8, 8, 72, 34, 8, 'rgba(4, 6, 10, 0.75)');
+      ctx.fillStyle = zone.haze;
+      ctx.font = '600 6px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+      ctx.textBaseline = 'top';
+      ctx.fillText('SCORE', 14, 11);
+      ctx.fillStyle = '#e9e4d8';
+      ctx.font = '600 ' + fNum +
+        'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+      ctx.fillText(String(score), 14, 27);
+      /* gate and zone */
+      var gw = Math.min(240, vw - 96);
+      var gx0 = vw - 8 - gw;
+      fillRoundRect(gx0, 8, gw, 34, 8, 'rgba(4, 6, 10, 0.75)');
+      ctx.fillStyle = zone.haze;
+      ctx.textBaseline = 'top';
+      ctx.fillText(gateLabel, gx0 + 8, 10);
+      ctx.fillStyle = '#e9e4d8';
+      ctx.fillText(zoneLabel, gx0 + 8, 24);
+      drawMuteBox(muteRect(), zone);
+      return;
+    }
+    ctx.fillStyle = 'rgba(4, 6, 10, 0.70)';
+    fillRoundRect(8, 8, 142, 48, 10, 'rgba(4, 6, 10, 0.70)');
+    ctx.fillStyle = '#e9e4d8';
+    ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    ctx.textBaseline = 'top';
+    ctx.fillText('SCORE', 18, 16);
+    ctx.fillText(String(score), 18, 36);
+
+    ctx.fillStyle = 'rgba(4, 6, 10, 0.70)';
+    fillRoundRect(162, 8, 170, 48, 10, 'rgba(4, 6, 10, 0.70)');
+    ctx.fillStyle = zone.haze;
+    ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    ctx.fillText('GATE ' + Math.min(20, gatesPassed + 1) + ' / 20', 172, 16);
+    ctx.fillText('ZONE ' + Math.min(5, gatesPassed >= 20 ? 5 : zoneForGate(gatesPassed + 1)) + ' / 5', 172, 36);
+
+    drawMuteBox(muteRect(), zone);
+  }
+
+  function render() {
+    var zone = ZONES[Math.max(1, Math.min(5, zoneIdx)) - 1];
+    drawParallax(zone);
+    for (var i = 0; i < activeGates.length; i++) drawGateWorld(activeGates[i], zone);
+    drawLanding(zone);
+    if (state !== 'title') drawDrone(zone);
+    drawHUD(zone);
+  }
+
+  /* ------------------------------- Input -------------------------------- */
+  function logicalMousePoint(e) {
+    var rect = canvas.getBoundingClientRect();
+    var cssWidth = rect.width || 1;
+    var ratio = W / cssWidth;
+    return { x: (e.clientX - rect.left) * ratio, y: (e.clientY - rect.top) * ratio };
+  }
+
+  /* On-screen Mute button hit region, matching drawMuteBox's drawn box. */
+  function hitsMuteButton(pt) {
+    if (!pt) return false;
+    var r = muteRect();
+    return pt.x >= r.x + 2 && pt.x <= r.x + r.w - 2 && pt.y >= r.y + 1 && pt.y <= r.y + r.h - 1;
+  }
+
+  canvas.addEventListener('pointerdown', function (e) {
+    if (isSelftest || isDemo) return;
+    var pt = logicalMousePoint(e);
+    if (state === 'playing' && !hitsMuteButton(pt)) {
+      ensureAudio();
+      e.preventDefault();
+      setThrust(true);
+    }
+  });
+
+  canvas.addEventListener('click', function (e) {
+    if (isSelftest || isDemo) return;
+    if (hitsMuteButton(logicalMousePoint(e))) {
+      e.preventDefault();
+      toggleMute();
+    }
+  });
+
+  window.addEventListener('pointerup', setThrustOff);
+  window.addEventListener('pointercancel', setThrustOff);
+  window.addEventListener('touchend', setThrustOff);
+  window.addEventListener('lostpointercapture', setThrustOff);
+  window.addEventListener('blur', setThrustOff);
+
+  window.addEventListener('keydown', function (e) {
+    var code = e.code || e.key || '';
+    if ((code === 'Space' || code === 'ArrowUp' || code === 'ArrowDown' || code === 'ArrowLeft' || code === 'ArrowRight' || code === 'Escape') && state === 'playing') e.preventDefault();
+    switch (code) {
+      case 'Space':
+        e.preventDefault();
+        if (state === 'title') startFromTitle(true);
+        else if (state === 'playing') setThrust(true);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (state === 'playing') setThrust(true);
+        break;
+      case 'Enter':
+      case 'NumpadEnter':
+        if (state === 'title') startFromTitle(false);
+        break;
+      case 'KeyR':
+        e.preventDefault();
+        restartGame();
+        break;
+      case 'KeyP':
+      case 'Escape':
+        e.preventDefault();
+        togglePause();
+        break;
+      case 'KeyM':
+        ensureAudio();
+        toggleMute();
+        break;
+      default:
+        break;
+    }
+  });
+
+  window.addEventListener('keyup', function (e) {
+    var code = e.code || e.key || '';
+    if (code === 'Space' || code === 'ArrowUp') setThrustOff();
+  });
+
+  window.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') {
+      if (state === 'playing') setPaused(true);
+    } else if (!isSelftest && !isDemo && document.visibilityState === 'visible') {
+      requestAnimationFrame(rafTick);
+    }
+  });
+
+  document.getElementById('startButton').addEventListener('click', function () { startFromTitle(false); });
+  document.getElementById('resumeButton').addEventListener('click', function () { setPaused(false); });
+  document.getElementById('muteButtonPause').addEventListener('click', toggleMute);
+  document.getElementById('restartButtonPause').addEventListener('click', restartGame);
+  document.getElementById('restartButtonEnd').addEventListener('click', restartGame);
+
+  /* ------------------------------- Clock -------------------------------- */
+  function rafTick() {
+    if (state === 'playing') fixedStep();
+    render();
+    if (document.visibilityState !== 'hidden') requestAnimationFrame(rafTick);
+  }
+
+  /* Scale the fixed 880x576 world onto the viewport, crisp at any DPR.
+     Wide screens fill the width (height margins allowed); tall screens fill
+     the full height and crop the world horizontally instead. */
+  function resizeCanvas() {
+    var dpr = 1;
+    if (window.devicePixelRatio) dpr = Math.max(1, window.devicePixelRatio);
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var wideEnough = (vw / vh) >= (W / H) * 0.92;
+    if (wideEnough) {
+      scale = vw / W;
+      if (H * scale > vh) scale = vh / H;
+    } else {
+      scale = vh / H;
+    }
+    var elemW = W * scale;
+    var elemH = H * scale;
+    var left = 0;
+    if (elemW < vw) left = (vw - elemW) / 2;
+    var top = (vh - elemH) / 2;
+
+    viewW = Math.max(80, vw / scale);
+    cropped = viewW < W - 8;
+    if (cropped) {
+      viewAnchor = Math.max(48, Math.min(viewW * 0.62, viewW * 0.40));
+    } else {
+      viewAnchor = DRONE_X;
+    }
+
+    canvas.width = Math.max(8, Math.round(W * scale * dpr));
+    canvas.height = Math.max(8, Math.round(H * scale * dpr));
+    canvas.style.width = elemW + 'px';
+    canvas.style.height = elemH + 'px';
+    canvas.style.left = left + 'px';
+    canvas.style.top = top + 'px';
+    ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+    render();
+  }
+
+  /* ----------------------------- Self-test ------------------------------ */
+  var selfTestTicks = 0;
+  var selfPhase = 1;
+  var winReached = false;
+  var selftestGates = 0;
+  var selftestFinalScore = 0;
+  var gameOverReached = false;
+  var restartWorks = false;
+  var phase2OK = false;
+  var phase4OK = false;
+  var selfDone = false;
+
+  function freshAfterRestart() {
+    return score === 0 &&
+      gatesPassed === 0 &&
+      zoneIdx === 1 &&
+      state === 'playing' &&
+      drone.worldX === 64 &&
+      drone.y === DRONE_Y0 &&
+      drone.vx === 0 &&
+      drone.vy === 0 &&
+      thrust === false &&
+      activeGates.length === 0 &&
+      landing === null;
+  }
+
+  function finishSelftest() {
+    if (selfDone) return;
+    selfDone = true;
+    if (selfTimer) clearInterval(selfTimer);
+    var ok = winReached &&
+      selftestGates >= 20 &&
+      scoreChangedDuringSelftest &&
+      gameOverReached &&
+      restartWorks &&
+      selfErrors.length === 0;
+    var result = {
+      ok: !!ok,
+      winReached: !!winReached,
+      gatesPassed: selftestGates,
+      scoreChanged: !!scoreChangedDuringSelftest,
+      gameOverReached: !!gameOverReached,
+      restartWorks: !!restartWorks,
+      ticks: selfTestTicks,
+      finalScore: selftestFinalScore,
+      errors: selfErrors.slice()
+    };
+    var pre = document.getElementById('selftest');
+    if (!pre) {
+      pre = document.createElement('pre');
+      pre.id = 'selftest';
+      document.body.appendChild(pre);
+    }
+    pre.textContent = JSON.stringify(result, null, 2);
+    document.title = ok ? 'SELFTEST PASS' : 'SELFTEST FAIL';
+    state = 'done';
+  }
+
+  function selftestTick() {
+    try {
+      if (selfPhase === 1 || selfPhase === 3) {
+        if (state === 'playing') {
+          for (var s = 0; s < 20; s++) {
+            controllerTick(selfPhase === 3);
+            fixedStep();
+          }
+        }
+        if (selfPhase === 1 && (state === 'win' || state === 'gameover')) {
+          winReached = state === 'win';
+          selftestGates = gatesPassed;
+          selftestFinalScore = winReached ? score : 0;
+          selfPhase = 2;
+        }
+      }
+      if (selfPhase === 2) {
+        restartGame();
+        phase2OK = freshAfterRestart();
+        selfPhase = 3;
+      }
+      if (selfPhase === 3 && state === 'gameover') {
+        gameOverReached = true;
+        selfPhase = 4;
+      }
+      if (selfPhase === 4) {
+        restartGame();
+        phase4OK = freshAfterRestart();
+        restartWorks = phase2OK && phase4OK;
+        finishSelftest();
+        return;
+      }
+    } catch (err) {
+      reportError(err);
+      finishSelftest();
+      return;
+    }
+    render();
+  }
+
+  /* -------------------------------- Demo -------------------------------- */
+  function demoTick() {
+    try {
+      if (state !== 'playing') restartGame();
+      controllerTick(false);
+      fixedStep();
+      render();
+    } catch (err) {
+      reportError(err);
+      clearInterval(demoTimer);
+      state = 'done';
+      render();
+    }
+  }
+
+  /* ------------------------------ Startup ------------------------------- */
+  var demoTimer = null;
+  bestScore = readBest();
+  updateMuteUI();
+  refreshScreens();
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', resizeCanvas);
+  }
+
+  if (isDemo) {
+    state = 'playing';
+    refreshScreens();
+    render();
+    demoTimer = setInterval(demoTick, 16);
+  } else if (isSelftest) {
+    state = 'playing';
+    refreshScreens();
+    render();
+    selfTimer = setInterval(selftestTick, 16);
+  } else {
+    state = 'title';
+    refreshScreens();
+    render();
+    if (document.visibilityState !== 'hidden') requestAnimationFrame(rafTick);
+  }
+})();
+</script>
+</body>
+</html>

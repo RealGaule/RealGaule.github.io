@@ -3,25 +3,26 @@
        Full-width rules are drawn in CSS (.post-byline). */ -}}
 {{- $fmt := default "2006-01-02" site.Params.DateFormat }}
 {{- $items := slice }}
+{{- $en := .Params.english }}  {{- /* `english: true` in front matter: English labels */}}
 
 {{- if not (.Param "hideAuthor") }}
   {{- with (partial "author.html" .) }}
-    {{- $items = $items | append (dict "label" (i18n "byline_author") "value" (. | htmlEscape) "class" "byline-author") }}
+    {{- $items = $items | append (dict "label" (cond $en "Author" (i18n "byline_author")) "value" (. | htmlEscape) "class" "byline-author") }}
   {{- end }}
 {{- end }}
 
 {{- if not .Date.IsZero }}
   {{- $v := printf `<time datetime="%s">%s</time>` (.Date.Format "2006-01-02") (.Date | time.Format $fmt) }}
-  {{- $items = $items | append (dict "label" (i18n "byline_published") "value" $v "class" "byline-date") }}
+  {{- $items = $items | append (dict "label" (cond $en "Published" (i18n "byline_published")) "value" $v "class" "byline-date") }}
   {{- if and (not .Lastmod.IsZero) (ne (.Lastmod.Format "2006-01-02") (.Date.Format "2006-01-02")) }}
     {{- $u := printf `<time datetime="%s">%s</time>` (.Lastmod.Format "2006-01-02") (.Lastmod | time.Format $fmt) }}
-    {{- $items = $items | append (dict "label" (i18n "byline_updated") "value" $u "class" "byline-updated") }}
+    {{- $items = $items | append (dict "label" (cond $en "Updated" (i18n "byline_updated")) "value" $u "class" "byline-updated") }}
   {{- end }}
 {{- end }}
 
 {{- if (.Param "ShowReadingTime") }}
-  {{- $rt := i18n "read_time" .ReadingTime | default (printf "%d 分钟" .ReadingTime) }}
-  {{- $items = $items | append (dict "label" (i18n "byline_read") "value" $rt "class" "byline-read") }}
+  {{- $rt := cond $en (printf "%d min" .ReadingTime) (i18n "read_time" .ReadingTime | default (printf "%d 分钟" .ReadingTime)) }}
+  {{- $items = $items | append (dict "label" (cond $en "Reading time" (i18n "byline_read")) "value" $rt "class" "byline-read") }}
 {{- end }}
 
 {{- $before := len $items }}
@@ -33,7 +34,7 @@
     {{- $sep := cond (lt (add $i 1) $n) `<span class="byline-sep">·</span>` "" }}
     {{- $links = $links | append (printf `<span class="byline-tag"><a href="%s">%s</a>%s</span>` $t.RelPermalink ($t.LinkTitle | htmlEscape) $sep) }}
   {{- end }}
-  {{- $items = $items | append (dict "label" (i18n "byline_tags") "value" (delimit $links " ") "class" "byline-tags") }}
+  {{- $items = $items | append (dict "label" (cond $en "Tags" (i18n "byline_tags")) "value" (delimit $links " ") "class" "byline-tags") }}
 {{- end }}
 
 {{- with $items }}

@@ -3,9 +3,9 @@
        exactly one of the two. KaTeX auto-render typesets math in both. */ -}}
 {{- $toc := .TableOfContents }}
 {{- if findRE `<a ` $toc 1 }}
-<aside class="toc-side" aria-label="{{ i18n "toc" | default "目录" }}">
+<aside class="toc-side" aria-label="{{ if .Params.english }}Contents{{ else }}{{ i18n "toc" | default "目录" }}{{ end }}">
   <div class="toc-side-inner">
-    <div class="toc-side-title">{{ i18n "toc" | default "目录" }}</div>
+    <div class="toc-side-title">{{ if .Params.english }}Contents{{ else }}{{ i18n "toc" | default "目录" }}{{ end }}</div>
     {{ replace $toc ` id="TableOfContents"` "" | safeHTML }}
   </div>
 </aside>
