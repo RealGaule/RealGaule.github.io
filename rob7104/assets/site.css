@@ -295,6 +295,8 @@ a.about-card { display: block; text-decoration: none; color: inherit; }
 .summary th { color: var(--accent); font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
 .summary td { color: var(--mute); }
 .summary td b { color: var(--ink); }
+.summary td a { color: var(--ink); text-decoration: none; border-bottom: 1px solid rgba(232, 180, 79, 0.5); white-space: nowrap; }
+.summary td a:hover { color: var(--accent); }
 
 /* ---- footer */
 .credits { margin-top: 72px; text-align: center; }

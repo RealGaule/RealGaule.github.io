@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="ROB7104 Lab 3 — stochastic differential equations: Brownian motion, Itô and Stratonovich, Euler–Maruyama, Fokker–Planck, convergence, stability, the Itô chain rule." />
+    <title>Lab 3 · Random Kicks: From Random Paths to Evolving Densities</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <link rel="stylesheet" href="lab3.css" />
+    <script type="importmap">{"imports": {"three": "../assets/vendor/three.module.min.js"}}</script>
+  </head>
+  <body>
+    <div class="glow" aria-hidden="true"></div>
+    <main class="wrap">
+      <header class="hero">
+        <p class="kicker">ROB7104 · Lab 3</p>
+        <h1>Random Kicks</h1>
+        <p class="team">Stochastic differential equations: random paths and their densities · Mathematics for Robotics, MBZUAI</p>
+        <nav class="links" aria-label="Lab materials">
+          <a href="Lab3.html">Read the notebook</a>
+          <a href="Lab3_notebook.zip" download>Download notebook</a>
+          <a href="../lab4/">Lab 4 page</a>
+        </nav>
+        <div class="cell hero-demo">
+          <video class="hero-video" controls autoplay muted loop playsinline preload="auto" src="media/s00_hero.mp4" poster="media/s00_hero_poster.png" aria-label="Six hundred robots wander on a table; two lamps switch on and the swarm splits between them"></video>
+        </div>
+      </header>
+
+      <section class="about" id="thread" aria-label="The main thread">
+        <div class="thread">
+          <div id="thread-formula">\[ \underbrace{dX = f(X)\,dt + g(X)\,dW}_{\text{one robot}} \quad\Longleftrightarrow\quad \underbrace{\frac{\partial p}{\partial t} = -\frac{\partial}{\partial x}(f\,p) + \frac12\frac{\partial^2}{\partial x^2}(g^2 p)}_{\text{the whole swarm}} \]</div>
+          <p class="note">One robot's path is unpredictable. The density of the swarm obeys a deterministic equation.</p>
+        </div>
+        <div class="about-grid" style="margin-top: 14px; grid-template-columns: repeat(4, 1fr)">
+          <a class="about-card" href="#noise"><p class="about-label">The noise</p><p><b>Kicks scale like \(\sqrt{\Delta t}\).</b> Where you evaluate them matters, and the robots decide which way.</p></a>
+          <a class="about-card" href="#densities"><p class="about-label">Densities</p><p><b>Simulate many robots, or solve one equation.</b> Both give the same swarm.</p></a>
+          <a class="about-card" href="#trust"><p class="about-label">Trust</p><p><b>Is the simulation right?</b> It depends on whether you track one robot or the swarm.</p></a>
+          <a class="about-card" href="#plane"><p class="about-label">The plane</p><p><b>Out on the table.</b> Spreading, holding a spot, choosing the brightest lamp.</p></a>
+        </div>
+      </section>
+
+      <section class="results" id="noise" aria-label="How big is a random kick?">
+        <div class="section-head">
+          <p class="eyebrow">Parts 1–2 · The noise</p>
+          <h2>How big is a random kick?</h2>
+          <p class="section-sub">Robots in a corridor take random steps. Their positions are one number, their density a curve.</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="How big is a random kick? demos">
+          <button class="feature-tab active" data-feature="d11" role="tab" aria-selected="true">Why \(\sqrt{\Delta t}\)</button>
+          <button class="feature-tab" data-feature="d12" role="tab" aria-selected="false">A slice is a density</button>
+          <button class="feature-tab" data-feature="d21" role="tab" aria-selected="false">Itô or Stratonovich</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d11" data-demo="d11">
+          <figcaption><b>Random kicks must scale like \(\sqrt{\Delta t}\).</b> Three corridors of robots take \(N\) random steps in one second, of size \(c\,\Delta t^{\,p} Z\) with \(p = 1, \tfrac12, \tfrac14\). Raise \(N\): the spread dies, stays, or explodes. The yellow marks are \(\pm 2\) standard deviations from the formula.</figcaption>
+          <div class="cell">
+            <canvas class="view3d"></canvas>
+            <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+            <div class="loading">loading 3D</div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Steps in 1 s</span>
+            <label>N <input type="range" data-ctl="n" min="1" max="9" step="1" value="4" /><output data-ctl="nout"></output></label>
+            <button data-ctl="replay">replay</button>
+            <button data-ctl="sweep">sweep N = 2 … 512</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>With \(\Delta t = 1/N\), the position at \(t = 1\) is a sum of \(N\) independent steps, so \(\mathrm{Var}\,X(1) = N c^2 \Delta t^{2p} = c^2\,\Delta t^{\,2p-1}\). Only \(p = \tfrac12\) makes this independent of \(\Delta t\): smaller kicks (\(p = 1\)) average out to nothing, larger ones (\(p = \tfrac14\)) add up to infinity. That is why a Wiener increment \(\Delta W\) has standard deviation \(\sqrt{\Delta t}\). All three corridors use the same random numbers \(Z\); only the scaling differs. Here \(c = 0.22\) m, and 2000 robots per corridor enter the variance (200 are drawn).</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d12" data-demo="d12">
+          <figcaption><b>Cut through all the paths at one time and you get the density.</b> Robots released at the centre of a dark corridor diffuse with \(D = 0.01\) m²/s. Drag the pink slice across the paths (or the time slider): the wall shows the histogram of all robots at that time against \(N(0, 2Dt)\). Change the number of robots \(M\) to see how fast the histogram's error falls.</figcaption>
+          <div class="duo">
+            <div class="cell">
+              <canvas class="view3d" style="min-height: 430px"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot" style="min-height: 430px; cursor: ew-resize"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Swarm</span>
+            <label>robots M <input type="range" data-ctl="m" min="0" max="8" step="1" value="2" /><output data-ctl="mout"></output></label>
+            <span class="ctl-label">Slice</span>
+            <label>time <input type="range" data-ctl="t" min="0" max="12" step="0.05" value="0" data-fmt="1" data-unit=" s" /><output></output></label>
+            <button data-ctl="play" class="on">play</button>
+            <button data-ctl="replay">release again</button>
+            <span class="readout" data-ctl="info" style="flex-basis: 100%; margin-left: 0"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>Each robot obeys \(dX = \sqrt{2D}\,dW\), \(X(0) = 0\), so \(X(t) \sim N(0, 2Dt)\): one path is unpredictable, but the histogram of all robots at a fixed time estimates this density, and it spreads like the heat equation \(\partial_t p = D\,\partial_x^2 p\). The error of a histogram from \(M\) robots (here the \(L^1\) distance to the bin-averaged exact density at \(t = 12\) s, median over many repeats) falls like \(1/\sqrt{M}\): four times as many robots halve it. This Monte Carlo rate returns in Part 5.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d21" data-demo="d21">
+          <figcaption><b>Where the robots gather depends on how you read the noise; real robots follow Stratonovich.</b> Robots drive at speed \(v(x) = v_0\,(1 - s\,I(x))\), slower under the lamp, and reverse at random. Far corridor: the robots themselves. Middle and near: the diffusion model \(dX = \sqrt{2D(X)}\,dW\), \(D = v^2/(2a)\), read as Itô and as Stratonovich. Watch which wall matches the yellow curve \(p \propto 1/v\) and which the pink curve \(p \propto 1/D\); change the slow-down \(s\) and the flip rate \(a\).</figcaption>
+          <div class="cell">
+            <canvas class="view3d"></canvas>
+            <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+            <div class="loading">loading 3D</div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Robots</span>
+            <label>slow-down s <input type="range" data-ctl="s" min="0" max="0.85" step="0.05" value="0.6" data-fmt="2" style="width: 150px" /><output></output></label>
+            <label>flip rate a <input type="range" data-ctl="a" min="1" max="12" step="0.5" value="4" data-fmt="1" data-unit=" /s" style="width: 150px" /><output></output></label>
+            <button data-ctl="restart">restart</button>
+            <span style="flex-basis: 100%; height: 0"></span>
+            <span class="ctl-label">Playback</span>
+            <span class="seg" data-ctl="speed"><button data-v="1">1×</button><button data-v="3" class="on">3×</button><button data-v="8">8×</button></span>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>With no drift and walls at both ends, the stationary density of \(dX = \sqrt{2D(X)}\,dW\) is \(p \propto 1/D \propto 1/v^2\) if the noise is read as Itô (amplitude taken at the start of each step), and \(p \propto 1/\sqrt{D} \propto 1/v\) if read as Stratonovich (midpoint). The real robots settle on \(1/v\) exactly: in steady state the right- and left-movers have equal densities and no net flow, so \(\tfrac{d}{dx}(v\,p) = 0\). A robot changes speed during its run as it enters the light, which is what the midpoint reading captures. The gaps are \(\max|\text{histogram} - \text{prediction}| / \max(\text{prediction})\), with the histogram averaged over the last 6 s of simulated time; \(v_0 = 1\) m/s, lamp width 0.3 m, 2500 robots per corridor (300 drawn), time step \(1/240\) s.</p>
+          </details>
+        </figure>
+      </section>
+
+      <section class="results" id="densities" aria-label="Simulate the robots, or solve for the swarm">
+        <div class="section-head">
+          <p class="eyebrow">Parts 3–4 · From paths to densities</p>
+          <h2>Simulate the robots, or solve for the swarm</h2>
+          <p class="section-sub">Euler–Maruyama moves each robot; the Fokker–Planck equation moves the density.</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Simulate the robots, or solve for the swarm demos">
+          <button class="feature-tab active" data-feature="d31" role="tab" aria-selected="true">Euler–Maruyama</button>
+          <button class="feature-tab" data-feature="d41" role="tab" aria-selected="false">Two lamps</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d31" data-demo="d31">
+          <figcaption><b>Euler–Maruyama moves every robot by \(f\,\Delta t + g\sqrt{\Delta t}\,Z\); the histogram follows the Fokker–Planck solution.</b> 3000 robots steer toward the lamp. Move the lamp, change the pull and the noise, or make the step large (1–2 s) and watch the histogram drift away from the cyan curve.</figcaption>
+          <div class="cell">
+            <canvas class="view3d"></canvas>
+            <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+            <div class="loading">loading 3D</div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Robots</span>
+            <label>pull κ <input type="range" data-ctl="kappa" min="0" max="0.2" step="0.005" value="0.08" data-fmt="3" data-unit=" m²/s" /><output></output></label>
+            <label>noise σ <input type="range" data-ctl="sigma" min="0.04" max="0.3" step="0.01" value="0.12" data-fmt="2" data-unit=" m/√s" /><output></output></label>
+            <label>step Δt <input type="range" data-ctl="dt" min="0.01" max="2" step="0.01" value="0.05" data-fmt="2" data-unit=" s" /><output></output></label>
+            <label>lamp at <input type="range" data-ctl="lamp" min="-1.2" max="1.2" step="0.05" value="0.5" data-fmt="2" data-unit=" m" /><output></output></label>
+            <button data-ctl="restart">restart from the left</button>
+            <span class="ctl-label">Speed</span>
+            <span class="seg" data-ctl="speed"><button data-v="1">1×</button><button data-v="3" class="on">3×</button><button data-v="10">10×</button></span>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>Euler–Maruyama freezes the drift and the noise at the start of each step: \(X_{j+1} = X_j + \kappa I'(X_j)\,\Delta t + \sigma\sqrt{\Delta t}\,Z_j\) with \(Z_j \sim N(0,1)\). Each robot gets its own \(Z_j\), so no two paths agree, but the histogram of all of them estimates the density \(p(x,t)\), which the Fokker–Planck equation \(\partial_t p = -\partial_x(\kappa I' p) + \tfrac12\sigma^2\partial_x^2 p\) computes directly (cyan, solved on a fine grid independent of \(\Delta t\)). With a small step the two differ only by sampling noise; with a step of a second or more each kick \(\sigma\sqrt{\Delta t}\,Z\) is so large that the simulated swarm spreads too wide, an error of the method, not of the noise. Far from the lamp the light is almost flat, so some robots barely feel a pull and wait at the wall; the density equation predicts the same small bump.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d41" data-demo="d41">
+          <figcaption><b>The density obeys its own equation; one bump splits into two and settles at \(e^{2\kappa I/\sigma^2}\).</b> 4000 robots start in the dark middle between two lamps. Turn one lamp up (try the right one to 1.1) and play at 50×: robots hop over the dark middle until the shares above each half match the pink stationary density.</figcaption>
+          <div class="cell">
+            <canvas class="view3d"></canvas>
+            <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+            <div class="loading">loading 3D</div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Lamps</span>
+            <label>left <input type="range" data-ctl="bl" min="0" max="1.2" step="0.05" value="0.8" data-fmt="2" /><output></output></label>
+            <label>right <input type="range" data-ctl="br" min="0" max="1.2" step="0.05" value="0.8" data-fmt="2" /><output></output></label>
+            <span class="ctl-label">Robots</span>
+            <label>noise σ <input type="range" data-ctl="sigma" min="0.1" max="0.35" step="0.01" value="0.2" data-fmt="2" data-unit=" m/√s" /><output></output></label>
+            <button data-ctl="restart">restart in the middle</button>
+            <span class="ctl-label">Speed</span>
+            <span class="seg" data-ctl="speed"><button data-v="1">1×</button><button data-v="4" class="on">4×</button><button data-v="10">10×</button><button data-v="50">50×</button></span>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>The Fokker–Planck equation \(\partial_t p = -\partial_x\big(\kappa I'(x)\,p\big) + \tfrac12\sigma^2\partial_x^2 p\) moves probability up the light and spreads it by the noise. Its flux vanishes when \(\kappa I' p = \tfrac12\sigma^2 p'\), which gives the stationary density \(p_\infty \propto \exp\!\big(2\kappa I(x)/\sigma^2\big)\): two lamps make two bumps, sharper for a strong pull and blurred by strong noise. Reaching it is slow because a robot must cross the dark middle against the pull of its own lamp; the readout gives that time, the slowest decay rate of the density equation. The histogram (Euler–Maruyama, \(\Delta t = 1/60\) s) and the cyan solution agree at every moment, not only at the end.</p>
+          </details>
+        </figure>
+      </section>
+
+      <section class="results" id="trust" aria-label="Small enough steps">
+        <div class="section-head">
+          <p class="eyebrow">Parts 5–7 · Can we trust the simulation?</p>
+          <h2>Small enough steps</h2>
+          <p class="section-sub">Every picture comes from a finite step \(\Delta t\). How wrong is it?</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Small enough steps demos">
+          <button class="feature-tab active" data-feature="d51" role="tab" aria-selected="true">Strong and weak</button>
+          <button class="feature-tab" data-feature="d71" role="tab" aria-selected="false">Stability</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d51" data-demo="d51">
+          <figcaption><b>Tracking one robot needs every path right; predicting the swarm needs only the distribution.</b> The same swarm, the same random kicks, simulated twice: with a coarse step \(\Delta t\) and with a fine reference step of 1/64 s. Change the coarse step and compare the pink bars (each robot's error) with the two shares under the lamp.</figcaption>
+          <div class="duo" style="grid-template-columns: 1.85fr 1fr">
+            <div class="cell">
+              <canvas class="view3d" style="min-height: 400px"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot" style="min-height: 400px"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Coarse step Δt</span>
+            <span class="seg" data-ctl="dt"><button data-v="0.25">¼ s</button><button data-v="0.5">½ s</button><button data-v="1">1 s</button><button data-v="2" class="on">2 s</button><button data-v="4">4 s</button></span>
+            <button data-ctl="restart">restart</button>
+            <span class="ctl-label">Speed</span>
+            <span class="seg" data-ctl="speed"><button data-v="1">1×</button><button data-v="4" class="on">4×</button><button data-v="10">10×</button></span>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>The robots slow down in light, \(v(x) = v_0(1 - s\,I(x))\), so their noise \(g(x) = v(x)/\sqrt a\) depends on the position; their Stratonovich equation is simulated in its Itô form \(dX = \tfrac12 g g'\,dt + g\,dW\). The <b>strong</b> error \(\mathbb E\,|X_L - X(T)|\) asks whether each simulated path stays near its true path; for Euler–Maruyama it shrinks only like \(\Delta t^{1/2}\). The <b>weak</b> error \(|\mathbb E\,\phi(X_L) - \mathbb E\,\phi(X(T))|\), here with \(\phi\) = "under the lamp", asks only for the distribution and shrinks like \(\Delta t\). In the plot the weak error was computed by propagating the Euler–Maruyama density exactly, so sampling noise does not hide it; it changes sign between 2 and 4 s, hence the dip.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d71" data-demo="d71">
+          <figcaption><b>Too large a step makes a stable system blow up; below the limit it can still be badly wrong.</b> The same robots and the same noise in three corridors, simulated with three steps. Set the front corridor's step as a fraction of the limit \(2/k = 4\) s: past 1 the robots overshoot the lamp further each step and leave the corridor; at 0.9 they stay, but spread three times too wide.</figcaption>
+          <div class="duo" style="grid-template-columns: 1.85fr 1fr">
+            <div class="cell">
+              <canvas class="view3d" style="min-height: 400px"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot" style="min-height: 400px"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Front corridor</span>
+            <label>step Δt / limit <input type="range" data-ctl="frac" min="0.05" max="1.3" step="0.025" value="1.2" data-fmt="3" data-unit=" × 4 s" /><output></output></label>
+            <button data-ctl="restart">restart</button>
+            <span class="ctl-label">Speed</span>
+            <span class="seg" data-ctl="speed"><button data-v="1">1×</button><button data-v="4" class="on">4×</button><button data-v="10">10×</button></span>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>The robots steer on the logarithm of the light, which for a Gaussian lamp is a linear pull \(f(x) = -kx\); with constant noise this is an Ornstein–Uhlenbeck process, stable for every \(k > 0\), settling at spread \(\sqrt{D/k} = 7.7\) cm. One Euler–Maruyama step maps the distance to the lamp to \((1 - k\Delta t)\,x\) plus a kick, so the simulation is stable only if \(|1 - k\Delta t| < 1\), that is \(\Delta t < 2/k\). In Higham's picture this is the point \((\Delta t\,\lambda, \Delta t\,\mu^2) = (-k\Delta t, 0)\) leaving the blue region \((1+x)^2 + y < 1\) at \(x = -2\). Below the limit the simulated spread settles at \(\sqrt{D/(k(1 - k\Delta t/2))}\), which is \(\sqrt{10}\approx 3.2\) times too wide at 0.9 of the limit: stable is not the same as accurate.</p>
+          </details>
+        </figure>
+      </section>
+
+      <section class="results" id="plane" aria-label="Two dimensions">
+        <div class="section-head">
+          <p class="eyebrow">Parts 8–9 · Out on the table</p>
+          <h2>Two dimensions</h2>
+          <p class="section-sub">The robots leave the corridor: positions are points in the plane.</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Two dimensions demos">
+          <button class="feature-tab active" data-feature="d81" role="tab" aria-selected="true">Itô chain rule</button>
+          <button class="feature-tab" data-feature="d91" role="tab" aria-selected="false">Holding a spot</button>
+          <button class="feature-tab" data-feature="d92" role="tab" aria-selected="false">Four lamps</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d81" data-demo="d81">
+          <figcaption><b>The distance from the start drifts outward although nothing pushes.</b> Twenty thousand robots leave one spot and wander at random; their mean position stays put, but their mean distance from the mark grows like \(\sqrt{t}\). Switch on the ordinary chain rule to see what calculus without the Itô term predicts, and release the robots off the mark to make the gap obvious.</figcaption>
+          <div class="duo pl-duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="pl-hud tr" data-hud="clock"></div>
+              <div class="pl-hud bl" data-hud="note"></div>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Robots</span>
+            <label>diffusion D <input type="range" data-ctl="D" min="0.001" max="0.01" step="0.0005" value="0.004" data-fmt="4" data-unit=" m²/s" /><output></output></label>
+            <span class="seg" data-ctl="start"><button data-v="0" class="on">release on the mark</button><button data-v="0.3">release 0.3 m from the mark</button></span>
+            <button data-ctl="ord">ordinary chain rule</button>
+            <button data-ctl="restart">restart</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>Each robot moves by \(dX = \sqrt{2D}\,dW\) in the plane. For its distance \(r = |X - m|\) from the mark, Itô's formula keeps the second-order term \(\tfrac12 \cdot 2D\,\Delta r\,dt\), and in two dimensions \(\Delta r = 1/r\), so \(dr = \frac{D}{r}\,dt + \sqrt{2D}\,dW_r\): an outward drift although the mean of \(dX\) is zero. For \(r^2\) the same rule gives \(d(r^2) = 4D\,dt + \text{(zero-mean noise)}\), hence \(E\,r^2 = r_0^2 + 4Dt\) exactly; released on the mark, \(r\) has the Rayleigh density and \(E\,r = \sqrt{\pi D t}\). The ordinary chain rule, \(dr = (x\,dx + y\,dy)/r\), has zero mean and predicts that the mean distance never changes (\(E\,r = r_0\)), which is wrong by the whole answer.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d91" data-demo="d91">
+          <figcaption><b>A linear SDE keeps a Gaussian; the covariance settles at the Lyapunov solution.</b> One robot holds the pink spot with a spring-and-damping controller while random pushes, strongest along the grey line, shove it around. Four thousand runs start from the same place and the same sideways velocity: watch the cloud spiral in and fill the dashed ellipse. Change the stiffness, damping or noise and release again.</figcaption>
+          <div class="duo pl-duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="pl-hud tr" data-hud="clock"></div>
+              <div class="pl-hud bl" data-hud="note"></div>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Controller</span>
+            <label>stiffness k <input type="range" data-ctl="k" min="0.5" max="4" step="0.05" value="1" data-fmt="2" data-unit=" 1/s²" /><output></output></label>
+            <label>damping c <input type="range" data-ctl="c" min="0.25" max="3" step="0.05" value="0.5" data-fmt="2" data-unit=" 1/s" /><output></output></label>
+            <label>noise <input type="range" data-ctl="noise" min="0" max="1.5" step="0.05" value="1" data-fmt="2" data-unit="×" /><output></output></label>
+            <button data-ctl="release">release again</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>With position \(p\) relative to the spot and velocity \(v\), the robot obeys \(dp = v\,dt\), \(dv = (-k\,p - c\,v)\,dt + G\,dW\): a linear SDE \(dz = Az\,dt + G'\,dW\). A linear map of Gaussians is Gaussian, so every run's state stays Gaussian; its mean follows the noise-free damped spiral and its covariance obeys \(\dot\Sigma = A\Sigma + \Sigma A^{\top} + B\) with \(B = G'G'^{\top}\). Setting \(\dot\Sigma = 0\) gives the Lyapunov equation \(A\Sigma + \Sigma A^{\top} + B = 0\), whose solution here is \(\Sigma_{pp} = Q/(2ck)\), \(\Sigma_{vv} = Q/(2c)\), \(\Sigma_{pv} = 0\) with \(Q = GG^{\top}\): a stiffer or better-damped controller shrinks the ellipse, and its shape is the shape of the pushes.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d92" data-demo="d92">
+          <figcaption><b>Noise lets the swarm leave a dim lamp; it settles in proportion to \(e^{-U/T}\), and slow cooling gathers it under the brightest.</b> Robots drift up the light and wander at random with strength \(T\). Released under the dimmest lamp, they spread to all four, and the shares approach the Boltzmann bars. Then anneal: lower \(T\) quickly or slowly and see how many end up under the brightest lamp.</figcaption>
+          <div class="duo pl-duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="pl-hud tr" data-hud="clock"></div>
+              <div class="pl-hud bl" data-hud="note"></div>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Robots</span>
+            <label>randomness T <input type="range" data-ctl="T" min="0.001" max="0.012" step="0.0005" value="0.004" data-fmt="4" data-unit=" m²/s" /><output></output></label>
+            <span class="ctl-label">Speed</span>
+            <span class="seg" data-ctl="speed"><button data-v="30">30 s/s</button><button data-v="100" class="on">100 s/s</button><button data-v="max">fastest</button></span>
+            <button data-ctl="restart">restart</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <div class="controls pl-sub">
+            <span class="ctl-label">Anneal</span>
+            <span>cool T from 0.008 to 0.0015 over</span>
+            <span class="seg" data-ctl="tau"><button data-v="100">100 s</button><button data-v="600">600 s</button><button data-v="3000" class="on">3000 s</button></span>
+            <button data-ctl="anneal">anneal</button>
+            <span class="ctl-label">Drop</span>
+            <label>x <input type="range" data-ctl="dx" min="-1.2" max="1.2" step="0.02" value="0.62" data-fmt="2" data-unit=" m" /><output></output></label>
+            <label>y <input type="range" data-ctl="dy" min="-1.2" max="1.2" step="0.02" value="0.6" data-fmt="2" data-unit=" m" /><output></output></label>
+            <button data-ctl="drop">drop robots here</button>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>Drifting up the light is drifting down the potential \(U = -\kappa I\), so each robot follows the Langevin equation \(dX = -\nabla U\,dt + \sqrt{2T}\,dW\). Its Fokker–Planck equation \(\partial_t p = \nabla\cdot(p\nabla U) + T\,\Delta p\) has zero flux exactly when \(p \propto e^{-U/T}\) (reflecting walls keep it on the table), so the share under lamp \(k\) tends to the integral of \(e^{\kappa I/T}\) over its pool divided by the integral over the table. Getting there takes a jump over the dark gap between pools, which needs the noise and gets exponentially rarer as \(T\) falls; cooling slowly lets the swarm keep up with the Boltzmann shares as they shift to the brightest lamp, cooling fast freezes it wherever it happens to be.</p>
+          </details>
+        </figure>
+      </section>
+
+      <section class="results" id="summary" aria-label="Summary">
+        <div class="section-head">
+          <p class="eyebrow">In one table</p>
+          <h2>Particles and densities</h2>
+        </div>
+        <table class="summary">
+          <thead><tr><th>Part</th><th>The question</th><th>The answer</th></tr></thead>
+          <tbody>
+            <tr><td><b><a href="#noise">The noise</a></b></td><td>How big is a random kick, and where is it evaluated?</td><td>Kicks scale like \(\sqrt{\Delta t}\); \((dW)^2 = dt\); robots that slow down in light follow the Stratonovich reading, \(p \propto 1/v\)</td></tr>
+            <tr><td><b><a href="#densities">Densities</a></b></td><td>Where will the swarm be?</td><td>Euler–Maruyama for the robots, Fokker–Planck for the density; stationary \(p \propto e^{2\kappa I/\sigma^2}\)</td></tr>
+            <tr><td><b><a href="#trust">Trust</a></b></td><td>Is the simulation right?</td><td>Strong order \(\tfrac12\) for each robot, weak order 1 for the swarm; Milstein for order 1 paths; a large step can destroy stability</td></tr>
+            <tr><td><b><a href="#plane">The plane</a></b></td><td>What changes in two dimensions?</td><td>The distance drifts outward (Itô chain rule); a linear SDE keeps a Gaussian with the Lyapunov covariance; Langevin samples \(e^{-U/T}\)</td></tr>
+          </tbody>
+        </table>
+        <p class="part-note">The reasoning behind every demo, with derivations, is in <a href="Lab3.html" style="color: var(--accent)">the notebook</a>.</p>
+      </section>
+
+      <section class="results" id="films" aria-label="Films from the notebook">
+        <div class="section-head">
+          <p class="eyebrow">Gallery</p>
+          <h2>The films from the notebook</h2>
+          <p class="section-sub">Rendered with MuJoCo. The robots are the particles; the walls and maps beside them show the density.</p>
+        </div>
+        <div class="style-grid">
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s00_hero_poster.png" src="media/s00_hero.mp4"></video></div><p><b>Two lamps.</b> Six hundred robots split between two lamps.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s01_sqrtdt_poster.png" src="media/s01_sqrtdt.mp4"></video></div><p><b>Why the square root.</b> Steps scaled by dt, sqrt(dt) and dt^(1/4).</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s01_slice_poster.png" src="media/s01_slice.mp4"></video></div><p><b>A slice is a density.</b> The histogram of all robots at one time.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s02_interpretation_poster.png" src="media/s02_interpretation.mp4"></video></div><p><b>Itô or Stratonovich.</b> Robots that slow down in light, three ways.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s03_em_poster.png" src="media/s03_em.mp4"></video></div><p><b>Euler–Maruyama.</b> Robots steering to a lamp, against the Fokker–Planck solution.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s04_fokker_planck_poster.png" src="media/s04_fokker_planck.mp4"></video></div><p><b>Two lamps, one density.</b> Robots, Fokker–Planck and the stationary density.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s05_strong_weak_poster.png" src="media/s05_strong_weak.mp4"></video></div><p><b>Strong and weak.</b> Tracking one robot against predicting the swarm.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s07_lottery_poster.png" src="media/s07_lottery.mp4"></video></div><p><b>The stability lottery.</b> Almost every path dies, the mean square explodes.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s07_stability_poster.png" src="media/s07_stability.mp4"></video></div><p><b>A step too large.</b> The simulation throws robots out of the corridor.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s08_chain_rule_poster.png" src="media/s08_chain_rule.mp4"></video></div><p><b>Itô chain rule.</b> The distance from the start drifts outward.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s09_hold_point_poster.png" src="media/s09_hold_point.mp4"></video></div><p><b>Holding a spot.</b> A cloud settles into the Lyapunov ellipse.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s09_four_lamps_poster.png" src="media/s09_four_lamps.mp4"></video></div><p><b>Four lamps.</b> Boltzmann fractions and annealing.</p></div>
+        </div>
+      </section>
+
+      <footer class="credits">
+        <h2 class="credits-title">ROB7104 Mathematics for Robotics</h2>
+        <p>Lab 3 · Stochastic differential equations, following Higham (2001) · MBZUAI</p>
+        <p class="notes">Robots are simulated with <a href="https://mujoco.org/" target="_blank" rel="noreferrer">MuJoCo</a>; the arm and drone models come from
+          three.js (MIT). D. J. Higham, <a href="https://doi.org/10.1137/S0036144500378302" target="_blank" rel="noreferrer">An algorithmic introduction to numerical simulation of stochastic differential equations</a>, SIAM Review 43 (2001).</p>
+      </footer>
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (window.renderMathInElement) {
+          renderMathInElement(document.body, {
+            delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }],
+            trust: true, strict: false, throwOnError: false,
+          });
+        }
+      });
+    </script>
+    <script src="../assets/site.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

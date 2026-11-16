@@ -11,4 +11,5 @@ ShowPostNavLinks: false
 
 ## 课程 Lab · ROB7104 Mathematics for Robotics
 
+- [Lab 3 · Stochastic Differential Equations: Random Paths and Their Densities](/rob7104/lab3/)
 - [Lab 4 · Linear Systems: Passive, Forced and Controlled](/rob7104/lab4/)
