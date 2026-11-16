@@ -1,0 +1,35 @@
+/* Lab 4: styles for the gantry demos (d31, d31b, d33) */
+.scene[data-feature="d31"] .duo, .scene[data-feature="d31b"] .duo, .scene[data-feature="d33"] .duo { grid-template-columns: 1.5fr 1fr; }
+.scene[data-feature="d31"] .duo .cell canvas, .scene[data-feature="d31b"] .duo .cell canvas,
+.scene[data-feature="d33"] .duo .cell canvas { height: 410px; min-height: 0; }
+.scene[data-feature="d31"] .duo .cell + .cell, .scene[data-feature="d31b"] .duo .cell + .cell,
+.scene[data-feature="d33"] .duo .cell + .cell { margin-top: 0; }
+
+/* text overlays inside the 3D cell; they never take the mouse */
+.g-hud, .g-note {
+  position: absolute; padding: 6px 10px; border-radius: 4px; background: rgba(8, 9, 12, 0.72);
+  color: var(--mute); font-family: var(--mono); font-size: 11.5px; line-height: 1.5; pointer-events: none;
+}
+.g-hud { top: 10px; right: 10px; text-align: right; }
+.g-note { left: 10px; bottom: 10px; max-width: calc(100% - 20px); }
+.g-hud:empty, .g-note:empty { display: none; }
+.g-hud b, .g-note b { color: var(--ink); font-weight: 600; }
+.g-hud .big { font-size: 15px; }
+.g-ok { color: var(--green) !important; } .g-bad { color: var(--red) !important; } .g-warn { color: var(--accent) !important; }
+.g-key { display: inline-block; min-width: 18px; padding: 0 5px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); text-align: center; }
+
+.controls .readout.g-wide { flex-basis: 100%; margin-left: 0; min-height: 18px; }
+.controls button:disabled, .controls input:disabled { opacity: 0.4; cursor: not-allowed; }
+.controls button:disabled:hover { border-color: rgba(242, 239, 233, 0.2); }
+.controls .g-keys { display: none; gap: 6px; }
+.controls .g-keys.on { display: inline-flex; }
+.controls .g-keys button { padding: 6px 16px; touch-action: none; user-select: none; }
+.controls .g-keys button.held { background: var(--accent); border-color: var(--accent); color: #08090c; }
+
+@media (max-width: 820px) {
+  .scene[data-feature="d31"] .duo, .scene[data-feature="d31b"] .duo, .scene[data-feature="d33"] .duo { grid-template-columns: 1fr; }
+  .scene[data-feature="d31"] .duo .cell canvas, .scene[data-feature="d31b"] .duo .cell canvas,
+  .scene[data-feature="d33"] .duo .cell canvas { height: 320px; }
+  .scene[data-feature="d31"] .duo .cell + .cell, .scene[data-feature="d31b"] .duo .cell + .cell,
+  .scene[data-feature="d33"] .duo .cell + .cell { margin-top: 14px; }
+}

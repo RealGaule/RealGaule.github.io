@@ -1,0 +1,12 @@
+/* Lab 4: styles for the drone demos */
+figure[data-demo="d11b"] .duo, figure[data-demo="d13"] .duo, figure[data-demo="d22"] .duo { grid-template-columns: 1.22fr 1fr; }
+figure[data-demo="d11b"] .duo .cell canvas, figure[data-demo="d13"] .duo .cell canvas, figure[data-demo="d22"] .duo .cell canvas { height: 430px; min-height: 0; }
+.plot-title, .plot-note { position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; color: var(--ink); font-size: 14px; }
+.plot-title { top: 8px; }
+.plot-note { bottom: 9px; font-size: 13px; }
+.plot-note b { font-family: var(--mono); font-weight: 600; }
+.plot-label { position: absolute; pointer-events: none; white-space: nowrap; color: var(--mute); font-size: 12px; line-height: 1.2; }
+@media (max-width: 820px) {
+  figure[data-demo="d11b"] .duo, figure[data-demo="d13"] .duo, figure[data-demo="d22"] .duo { grid-template-columns: 1fr; }
+  figure[data-demo="d11b"] .duo .cell canvas, figure[data-demo="d13"] .duo .cell canvas, figure[data-demo="d22"] .duo .cell canvas { height: 340px; }
+}

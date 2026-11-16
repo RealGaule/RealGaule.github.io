@@ -123,3 +123,8 @@ theme = "PaperMod"             # git submodule, pinned (see README)
   [[module.mounts]]
     source = "mtod"
     target = "static/mtod"
+  # ROB7104 lab pages (hand-written, like mtod/): /rob7104/lab3/, /rob7104/lab4/
+  [[module.mounts]]
+    source = "rob7104"
+    target = "static/rob7104"
+    excludeFiles = ["**/README.md"]

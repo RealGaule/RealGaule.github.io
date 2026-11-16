@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="ROB7104 Lab 4 — linear systems theory seen on three robots: passive, forced and controlled systems." />
+    <title>Lab 4 · Linear Systems: Let It Swing, Shake It, Steer It</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <link rel="stylesheet" href="lab4.css" />
+    <link rel="stylesheet" href="drone.css" />
+    <link rel="stylesheet" href="waiter.css" />
+    <link rel="stylesheet" href="gantry.css" />
+    <script type="importmap">{"imports": {"three": "../assets/vendor/three.module.min.js"}}</script>
+  </head>
+  <body>
+    <div class="glow" aria-hidden="true"></div>
+    <main class="wrap">
+      <header class="hero">
+        <p class="kicker">ROB7104 · Lab 4</p>
+        <h1>Let It Swing,<br />Shake It, Steer&nbsp;It</h1>
+        <p class="team">Linear systems theory on three robots · Mathematics for Robotics, MBZUAI</p>
+        <nav class="links" aria-label="Lab materials">
+          <a href="Lab4.html">Read the notebook</a>
+          <a href="Lab4_notebook.zip" download>Download notebook</a>
+        </nav>
+        <div class="cell hero-demo">
+          <video class="hero-video" controls autoplay muted loop playsinline preload="auto" src="media/hero.mp4" aria-label="Three robots: a drone with a slung load, an arm carrying a glass of water, a gantry crane"></video>
+        </div>
+      </header>
+
+      <section class="about" id="thread" aria-label="The main thread">
+        <div class="thread">
+          <div id="thread-formula">\[ x(t) \;=\; \htmlClass{term t-passive}{e^{At}x_0} \;+\; \int_0^t e^{A(t-\tau)}\,\htmlClass{term t-forced t-controlled}{g(\tau)}\,d\tau \]</div>
+          <p class="note">One formula for the whole lab. Three robots, each a moving support with something that swings below it.</p>
+        </div>
+        <div class="about-grid three" style="margin-top: 14px">
+          <a class="about-card pick" data-term="t-passive" href="#passive">
+            <p class="about-label">Passive</p>
+            <p><b>\(g = 0\).</b> Nobody touches it. The system does whatever \(e^{At}\) says: it swings in its modes and, with friction, settles.</p>
+          </a>
+          <a class="about-card pick" data-term="t-forced" href="#forced">
+            <p class="about-label">Forced</p>
+            <p><b>\(g(t)\) is given.</b> The world pushes. Every push starts its own free motion, and the response is their sum.</p>
+          </a>
+          <a class="about-card pick" data-term="t-controlled" href="#controlled">
+            <p class="about-label">Controlled</p>
+            <p><b>\(g = Bu\), and we pick \(u\).</b> Which states can the motor reach, and what is the cheapest way to get there?</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="results" id="passive" aria-label="Part 1: passive systems">
+        <div class="section-head">
+          <p class="eyebrow">Part 1 · Passive</p>
+          <h2>Let it swing</h2>
+          <p class="section-sub">A drone hovers with a two-link slung load. Nothing drives it: \(\dot x = Ax\).</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Part 1 demos">
+          <button class="feature-tab active" data-feature="d11" role="tab" aria-selected="true">Normal modes</button>
+          <button class="feature-tab" data-feature="d11b" role="tab" aria-selected="false">The flow \(e^{At}\)</button>
+          <button class="feature-tab" data-feature="d12" role="tab" aria-selected="false">When linear fails</button>
+          <button class="feature-tab" data-feature="d13" role="tab" aria-selected="false">Stability</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d11" data-demo="d11">
+          <figcaption><b>Any small swing is a mix of two pure swings.</b> Set how much of each mode to release. The faint green and red loads are the two modes on their own; the yellow load is the robot.</figcaption>
+          <div class="cell">
+            <canvas class="view3d"></canvas>
+            <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+            <div class="loading">loading 3D</div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Release</span>
+            <label><span class="c-green">mode 1</span> <input type="range" data-ctl="a1" min="0" max="1" step="0.01" value="0.75" data-fmt="2" /><output></output></label>
+            <label><span class="c-red">mode 2</span> <input type="range" data-ctl="a2" min="0" max="1" step="0.01" value="0.75" data-fmt="2" /><output></output></label>
+            <button data-ctl="ghosts" class="on">mode ghosts</button>
+            <button data-ctl="release">release again</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>Linearized about hanging straight down, the load obeys \(M\ddot\theta + K\theta = 0\). Trying \(\theta(t) = v\cos(\omega t)\) gives the eigenvalue problem \(Kv = \omega^2 Mv\), with two solutions: both links swing together (slow), or against each other (fast). Because the equation is linear, any sum of the two is also a solution, and every release is such a sum. The yellow robot is the full nonlinear simulation; at these angles it stays on top of the sum.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d11b" data-demo="d11b">
+          <figcaption><b>\(e^{At}\) moves every initial condition at once.</b> One drone carries 25 loads, released from a 5 × 5 grid of angle and angular velocity. Set the damping: the whole grid turns and shrinks together, and straight lines stay straight.</figcaption>
+          <div class="duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell">
+              <canvas class="plot"></canvas>
+              <div class="plot-title">\(x(t) = e^{At}\,x(0)\)</div>
+              <div class="plot-note c-yellow">\(\|e^{At}\|_2 =\) <b data-ctl="norm">1.00</b> &nbsp;=&nbsp; longest semi-axis / 12°</div>
+            </div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Flow</span>
+            <label>damping ratio <input type="range" data-ctl="zeta" min="0" max="0.3" step="0.005" value="0.05" data-fmt="3" /><output></output></label>
+            <button data-ctl="play" class="on">pause</button>
+            <button data-ctl="restart">restart</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>Each load obeys the same linear equation \(\dot x = Ax\) with \(x = (\theta, \dot\theta)\), so its state at time \(t\) is \(x(t) = e^{At}x(0)\): one matrix, applied to every starting point. A matrix maps lines to lines and circles to ellipses, which is why the grid stays a grid. The plane on the right uses the coordinates \((\theta, \dot\theta/\omega)\); there the undamped flow is a pure rotation, and with damping the circle of radius 12° becomes an ellipse whose longest semi-axis is \(12^\circ \times \|e^{At}\|_2\), the largest factor by which any start can be stretched.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d12" data-demo="d12">
+          <figcaption><b>The linear model is right for small swings only.</b> Set the angle from which both links are released. The solid load is the robot; the blue halo is what the linear model predicts from the same start; the yellow line is the gap between them.</figcaption>
+          <div class="cell">
+            <canvas class="view3d"></canvas>
+            <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+            <div class="loading">loading 3D</div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Release</span>
+            <label>angle <input type="range" data-ctl="angle" min="2" max="90" step="1" value="30" data-fmt="0" data-unit="°" /><output></output></label>
+            <button data-ctl="release">release again</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>The robot obeys \(M(\theta)\ddot\theta + \dots + g\,(\dots\sin\theta_i\dots) = 0\). The linear model keeps only the first term of \(\sin\theta = \theta - \theta^3/6 + \dots\), which gives \(\dot x = Ax\) and the prediction \(x(t) = e^{At}x_0\). The dropped term is 0.1% of \(\theta\) at 5°, 5% at 30° and 41% at 90°, so the prediction is good for small swings and useless for large ones. The error also adds up over time: the real load swings a little slower than the model, so even a small gap keeps growing. Each release runs for 12 s.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d13" data-demo="d13">
+          <figcaption><b>Stable means every eigenvalue is in the left half-plane.</b> Add friction at the hinges and the four eigenvalues of \(A\) move left; the swing then dies at the rate of the eigenvalue closest to the imaginary axis.</figcaption>
+          <div class="duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell">
+              <canvas class="plot"></canvas>
+              <div class="plot-label" data-ctl="lab-eig">eigenvalues of \(A\)</div>
+              <div class="plot-label" data-ctl="lab-norm">\(\|e^{At}\|_2\), the worst start</div>
+              <div class="plot-label" data-ctl="lab-bound" style="color: var(--accent)">\(c\,e^{\alpha t}\), \(\alpha = \max \mathrm{Re}\,\lambda\)</div>
+              <div class="plot-label c-yellow" data-ctl="lab-robot">the robot, \(\|x(t)\| / \|x_0\|\)</div>
+            </div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Friction</span>
+            <label>hinge friction <input type="range" data-ctl="d" min="0" max="24" step="0.1" value="1.5" data-fmt="1" /><output></output></label>
+            <button data-ctl="release">release again</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>With friction the model is \(M\ddot\theta + C\dot\theta + K\theta = 0\), or \(\dot x = Ax\), and every solution is a sum of terms \(e^{\lambda t}\) with \(\lambda\) an eigenvalue of \(A\), a root of \(\det(M\lambda^2 + C\lambda + K) = 0\). A term with \(\mathrm{Re}\,\lambda &lt; 0\) dies and one with \(\mathrm{Re}\,\lambda &gt; 0\) would grow, so \(\|e^{At}\| \le c\,e^{\alpha t}\) with \(\alpha = \max \mathrm{Re}\,\lambda\): the eigenvalue nearest the axis sets the pace. Without friction all four sit on the axis and the swing never dies. The slider is the friction \(d_1\) of the upper hinge in N·m·s; the lower hinge gets a tenth of it. Past about 19 the fast pair meets on the real axis and splits: one eigenvalue runs off to the left, the other turns back toward the imaginary axis.</p>
+          </details>
+        </figure>
+      </section>
+
+      <section class="results" id="forced" aria-label="Part 2: forced systems">
+        <div class="section-head">
+          <p class="eyebrow">Part 2 · Forced</p>
+          <h2>Shake it</h2>
+          <p class="section-sub">Now the support moves on its own schedule: \(\dot x = Ax + g(t)\).</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Part 2 demos">
+          <button class="feature-tab active" data-feature="d21" role="tab" aria-selected="true">A sum of kicks</button>
+          <button class="feature-tab" data-feature="d22" role="tab" aria-selected="false">Resonance</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d21" data-demo="d21">
+          <figcaption><b>Any response is a sum of responses to small kicks.</b> Drag the slider to move the hand yourself, gently or roughly, or play the standard move. On the right, the hand's acceleration is cut into slices, each slice starts its own small slosh, and the sloshes add up to the tilt of the water.</figcaption>
+          <div class="duo wduo with-hand">
+            <div class="wcol">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="controls whand">
+                <span class="ctl-label">Hand</span>
+                <label>position <input type="range" data-ctl="hand" min="-20" max="20" step="0.1" value="-15" data-fmt="1" data-unit=" cm" aria-label="hand position along x" /><output></output></label>
+              </div>
+            </div>
+            <div class="cell"><canvas class="plot"></canvas></div>
+          </div>
+          <div class="controls">
+            <button data-ctl="std">standard move</button>
+            <button data-ctl="reset">reset</button>
+            <span class="ctl-label">Speed</span>
+            <span class="seg" data-ctl="speed"><button data-v="1">1×</button><button data-v="0.25" class="on">0.25×</button></span>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>The water is not a fluid simulation: it is the first slosh mode, modelled as a pendulum of tilt \(\theta\) with \(\omega \approx 22.7\) rad/s (period 0.28 s) and damping ratio \(\zeta = 0.02\), pushed by the hand's acceleration \(a(t)\). Starting from rest, the variation-of-constants formula leaves only the integral, \(\theta(t) = \int_0^t h(t-\tau)\,a(\tau)\,d\tau\), where \(h\) is the decaying slosh started by one unit kick; cutting \(a\) into slices cuts the integral into a sum of such sloshes, which is the yellow curve lying on the linear model (white). The blue curve is the robot, the nonlinear pendulum: it stays close while the tilt is small. The slider is a target that the hand follows as a critically damped second-order system (natural frequency 12 rad/s, speed limit 1 m/s), so the hand's acceleration is always finite; in slow motion your own hand counts as four times faster, so move gently.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d22" data-demo="d22">
+          <figcaption><b>Shake at a natural frequency and that mode grows.</b> The drone is shaken sideways by ±3 cm (the short bar under it) at the frequency you choose. At the two natural frequencies the load travels many times further than the drone; in between there is a frequency at which the crate barely moves. The blue halo is the steady motion of the linear model: a random start always ends on it.</figcaption>
+          <div class="duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell">
+              <canvas class="plot"></canvas>
+            </div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Shake</span>
+            <label>frequency / \(\omega_1\) <input type="range" data-ctl="r" min="0.4" max="2.4" step="0.001" value="1" data-fmt="3" /><output></output></label>
+            <span class="seg" data-ctl="jump"><button data-v="m1" class="on">mode 1</button><button data-v="still">crate still</button><button data-v="m2">mode 2</button></span>
+            <button data-ctl="random">random start</button>
+            <span class="readout" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>The shake \(x(t) = X\sin\omega t\) enters as the forcing \(g(t)\) in \(x(t) = e^{At}x_0 + \int_0^t e^{A(t-\tau)}g(\tau)\,d\tau\). The first term carries the start and dies with friction, which is why every start ends on the same motion. What stays is a swing at the shake frequency with amplitude \(\Theta(\omega) = (K - \omega^2 M + i\omega C)^{-1}h\,\omega^2 X\). Without friction \(K - \omega^2 M\) is singular exactly at the natural frequencies \(\omega_1, \omega_2\), so there the response is large and has the shape of that mode. At \(\omega = \sqrt{g/l_2}\), the frequency of the parcel swinging alone, the pull of the parcel on the crate cancels the pull of the drone, and the crate stays where it is while the drone moves above it.</p>
+          </details>
+        </figure>
+      </section>
+
+      <section class="results" id="controlled" aria-label="Part 3: controlled systems">
+        <div class="section-head">
+          <p class="eyebrow">Part 3 · Controlled</p>
+          <h2>Steer it</h2>
+          <p class="section-sub">We choose the forcing: \(\dot x = Ax + Bu\), with one motor.</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Part 3 demos">
+          <button class="feature-tab active" data-feature="d31" role="tab" aria-selected="true">Controllability</button>
+          <button class="feature-tab" data-feature="d31b" role="tab" aria-selected="false">Observability</button>
+          <button class="feature-tab" data-feature="d32" role="tab" aria-selected="false">Two kicks cancel</button>
+          <button class="feature-tab" data-feature="d33" role="tab" aria-selected="false">Steering a crane</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d31" data-demo="d31">
+          <figcaption><b>Equal cables: no trolley motion changes the difference between the two swings.</b> Drive the trolley: the yellow trace stays on the grey one. Then change the second cable and drive again: now the difference moves, and one planned input can bring everything to rest.</figcaption>
+          <div class="duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="g-hud" data-hud="rank"></div>
+              <div class="g-note" data-hud="note"></div>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Trolley</span>
+            <label>go to <input type="range" data-ctl="pos" min="-1" max="1" step="0.01" value="0" data-fmt="2" data-unit=" m" /><output></output></label>
+            <button data-ctl="m1">right, then left</button>
+            <button data-ctl="m2">left, then right</button>
+            <button data-ctl="m3">long sweep</button>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Cables</span>
+            <label><span class="c-yellow">second cable</span> <input type="range" data-ctl="l2" min="0.6" max="1.4" step="0.01" value="1" data-fmt="2" data-unit=" m" /><output></output></label>
+            <button data-ctl="swing">swing again</button>
+            <button data-ctl="rest">bring everything to rest</button>
+            <span class="readout g-wide" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>Each load obeys \(\ddot\theta_i = -\tfrac{g}{l_i}\theta_i - \tfrac{1}{l_i}u\), where \(u\) is the trolley acceleration (plus a little friction). With \(l_1 = l_2\), subtracting the two equations removes \(u\): the difference \(\theta_1-\theta_2\) swings on its own, whatever the trolley does. The rank test says the same thing, \(\operatorname{rank}\,[\,B\;\;AB\;\cdots\;A^{5}B\,] = 4 < 6\). With unequal cables the rank is 6 and the minimum-energy input brings any state \(x_0\) to rest in time \(T\) at the cost \(x_0^{\top}e^{A^{\top}T}\,W(T)^{-1}e^{AT}x_0\); as the lengths approach each other the Gramian \(W(T)\) becomes singular and this cost grows without bound. The statement is exact for the linear model; the robot here is the full pendulum, so with equal cables the two traces agree to a fraction of a degree, not to the last digit.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d31b" data-demo="d31b">
+          <figcaption><b>A sensor can only reconstruct what leaves a trace in its reading.</b> A load cell on the parked trolley measures the sideways pull of the two cables. Release one load or the other, with equal and with unequal cables, then hide the loads and let a Kalman filter find them from the reading alone.</figcaption>
+          <div class="duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="g-hud" data-hud="rank"></div>
+              <div class="g-note" data-hud="note"></div>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Cables</span>
+            <span class="seg" data-ctl="cables"><button data-v="equal" class="on">equal · 1.0 and 1.0 m</button><button data-v="unequal">unequal · 1.0 and 0.7 m</button></span>
+            <span class="ctl-label">Release</span>
+            <span class="seg" data-ctl="start"><button data-v="a" class="on">blue load at 12°</button><button data-v="b">yellow load at 12°</button></span>
+            <button data-ctl="hide">hide the loads</button>
+            <button data-ctl="again">release again</button>
+            <span class="readout g-wide" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>For small angles the load cell reads \(y = g\,(m_1\theta_1 + m_2\theta_2) = Cx\). With equal cables and equal masses, shifting swing from one load to the other changes \(x\) but never \(y\): the observability matrix \([\,C;\;CA;\;CA^2;\;CA^3\,]\) has rank 2 of 4, and the two releases give the same reading. The Kalman filter predicts with the model and corrects with the surprise \(y_k - C\hat x_k\); a direction that never shows up in \(y\) is never corrected, so the filter splits the swing evenly between the two loads and stays there. Shorten one cable and the two loads swing at different rates, the rank is 4, and the estimate locks on within a few seconds.</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d32" data-demo="d32">
+          <figcaption><b>Two kicks half a period apart cancel.</b> The arm carries the glass 30 cm in two half-steps. Set the delay of the second half-step, press go, and hunt for the delay that leaves the water flat after the hand stops.</figcaption>
+          <div class="duo wduo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Second half-step</span>
+            <label>delay <input type="range" data-ctl="delay" min="0" max="0.35" step="0.002" value="0.06" data-fmt="3" data-unit=" s" /><output></output></label>
+            <button data-ctl="go">go</button>
+            <button data-ctl="one">one step</button>
+            <button data-ctl="ideal">ideal delay</button>
+            <span class="ctl-label">Speed</span>
+            <span class="seg" data-ctl="speed"><button data-v="1">1×</button><button data-v="0.25" class="on">0.25×</button></span>
+            <span class="readout wrow" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>The water is not a fluid simulation: it is the first slosh mode, modelled as a lightly damped pendulum (\(\omega \approx 22.7\) rad/s, period 0.28 s, \(\zeta = 0.02\)) pushed by the hand's acceleration. Responses of a linear system add, so if the plain move gives the tilt \(\theta_1(t)\), the move in two half-steps gives \(\theta(t) = A_1\,\theta_1(t) + A_2\,\theta_1(t-\Delta)\). After the hand stops both terms are decaying sinusoids; with \(\Delta = \pi/\omega_d \approx 0.138\) s the second is exactly opposite to the first, and with \(A_1 = 0.516\), \(A_2 = 0.484\) (the first has decayed a little by then) they cancel. The robot is the nonlinear pendulum, so at these large tilts a small slosh remains and its best delay is slightly different (blue curve in the lower plot).</p>
+          </details>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d33" data-demo="d33">
+          <figcaption><b>Rank says whether; the Gramian says how hard.</b> The crane must carry its two-link load 2 m and stop it. Pick a command and press go, compare the three, then try to beat them with the arrow keys.</figcaption>
+          <div class="duo">
+            <div class="cell">
+              <canvas class="view3d"></canvas>
+              <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+              <div class="g-hud" data-hud="rank"></div>
+              <div class="g-note" data-hud="note"></div>
+              <div class="loading">loading 3D</div>
+            </div>
+            <div class="cell"><canvas class="plot"></canvas></div>
+          </div>
+          <div class="controls">
+            <span class="ctl-label">Command</span>
+            <span class="seg" data-ctl="cmd"><button data-v="bang" class="on">accelerate, then brake</button><button data-v="shaped">input shaping</button><button data-v="minE">minimum energy</button><button data-v="drive">drive it yourself</button></span>
+            <label>travel time <input type="range" data-ctl="T" min="3" max="6" step="0.1" value="3.5" data-fmt="1" data-unit=" s" /><output></output></label>
+            <button data-ctl="go" class="on">go</button>
+            <span class="g-keys" data-ctl="keys"><button data-ctl="left" aria-label="accelerate left">&#9664;</button><button data-ctl="right" aria-label="accelerate right">&#9654;</button></span>
+            <span class="readout g-wide" data-ctl="info"></span>
+          </div>
+          <details class="prompt">
+            <summary>Why</summary>
+            <p>Trolley and load together are \(\dot x = Ax + Bu\) with six states, and \(\operatorname{rank}\,[\,B\;\;AB\;\cdots\;A^{5}B\,] = 6\): every state can be reached, in particular "2 m further, everything at rest". Among all inputs that do it in time \(T\), the one with the least energy \(\int_0^T u^2\,dt\) is \(u(t) = B^{\top}e^{A^{\top}(T-t)}\,W(T)^{-1}\,(x_f - e^{AT}x_0)\) with the Gramian \(W(T) = \int_0^T e^{As}BB^{\top}e^{A^{\top}s}\,ds\), and it costs \((x_f - e^{AT}x_0)^{\top}W(T)^{-1}(x_f - e^{AT}x_0)\). "Minimum" is for that travel time: input shaping adds delayed copies of the simple command so that each swing mode cancels itself, arrives later, and may use less energy than the minimum for the shorter time, but never less than the minimum for its own, longer time.</p>
+          </details>
+        </figure>
+      </section>
+
+      <section class="results" id="summary" aria-label="Summary">
+        <div class="section-head">
+          <p class="eyebrow">In one table</p>
+          <h2>Three questions, three tools</h2>
+        </div>
+        <table class="summary">
+          <thead><tr><th>Part</th><th>The question</th><th>The tool</th><th>Seen on</th></tr></thead>
+          <tbody>
+            <tr><td><b><a href="#passive">Passive</a></b><br />\(g = 0\)</td><td>What does the system do alone?</td><td>Eigenvalues and modes of \(A\); the flow \(e^{At}\); the bound \(\lVert e^{At}\rVert \le c\,e^{-at}\)</td><td>Drone with a slung load</td></tr>
+            <tr><td><b><a href="#forced">Forced</a></b><br />\(g(t)\) given</td><td>What does a given forcing add?</td><td>The integral as a sum of kicks; bounded input, bounded state; resonance</td><td>Arm with a glass of water; shaken drone</td></tr>
+            <tr><td><b><a href="#controlled">Controlled</a></b><br />\(g = Bu\)</td><td>What can we make it do, and see?</td><td>Rank of \([B\ AB\ \cdots]\) and of \([C;\ CA;\ \cdots]\); the Gramian \(W(T)\)</td><td>Gantry crane; arm with a glass of water</td></tr>
+          </tbody>
+        </table>
+        <p class="part-note">The reasoning behind every demo, with derivations, is in <a href="Lab4.html" style="color: var(--accent)">the notebook</a>.</p>
+      </section>
+
+      <section class="results" id="films" aria-label="Films from the notebook">
+        <div class="section-head">
+          <p class="eyebrow">Gallery</p>
+          <h2>The films from the notebook</h2>
+          <p class="section-sub">Rendered with MuJoCo. In each, the solid robot is a nonlinear simulation and the linear model is the ghost or the flat diagram.</p>
+        </div>
+        <div class="style-grid">
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s11_modes_poster.png" src="media/s11_modes.mp4"></video></div><p><b>Normal modes.</b> Two pure swings, and any release as their sum.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s11b_expm_poster.png" src="media/s11b_expm.mp4"></video></div><p><b>The flow of the matrix exponential.</b> Twenty-five initial conditions carried at once.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s12_linearize_poster.png" src="media/s12_linearize.mp4"></video></div><p><b>When linear fails.</b> Release at 5, 30 and 90 degrees.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s13_stability_poster.png" src="media/s13_stability.mp4"></video></div><p><b>Stability.</b> Friction moves the eigenvalues to the left.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s21_kicks_poster.png" src="media/s21_kicks.mp4"></video></div><p><b>A sum of kicks.</b> The slosh as a sum of responses to slices of the hand's acceleration.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s22_resonance_poster.png" src="media/s22_resonance.mp4"></video></div><p><b>Resonance.</b> Seven drones shaken at seven frequencies.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s22_sweep_poster.png" src="media/s22_sweep.mp4"></video></div><p><b>A frequency sweep.</b> Through both resonances.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s22_forget_poster.png" src="media/s22_forget.mp4"></video></div><p><b>Forgetting the start.</b> Five starts, one steady motion.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s31_control_poster.png" src="media/s31_control.mp4"></video></div><p><b>Controllability.</b> Equal cables hide a swing from the motor.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s31_observe_poster.png" src="media/s31_observe.mp4"></video></div><p><b>Observability.</b> What a load cell can and cannot see.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s32_waiter_poster.png" src="media/s32_waiter.mp4"></video></div><p><b>Two kicks cancel.</b> One step against two half-steps.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s33_transport_poster.png" src="media/s33_transport.mp4"></video></div><p><b>Steering a crane.</b> Three ways to carry a load 2 m.</p></div>
+        </div>
+      </section>
+
+      <footer class="credits">
+        <h2 class="credits-title">ROB7104 Mathematics for Robotics</h2>
+        <p>Lab 4 · Linear systems theory: passive, forced and controlled systems · MBZUAI</p>
+        <p class="notes">Robots are simulated with <a href="https://mujoco.org/" target="_blank" rel="noreferrer">MuJoCo</a>; the arm and drone models come from
+          <a href="https://github.com/google-deepmind/mujoco_menagerie" target="_blank" rel="noreferrer">MuJoCo Menagerie</a> (Franka Emika Panda, Skydio X2; Apache-2.0). 3D drawing uses three.js (MIT).</p>
+      </footer>
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (window.renderMathInElement) {
+          renderMathInElement(document.body, {
+            delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }],
+            trust: true, strict: false, throwOnError: false,
+          });
+        }
+      });
+    </script>
+    <script src="../assets/site.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
