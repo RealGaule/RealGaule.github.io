@@ -8,3 +8,7 @@ ShowPostNavLinks: false
 
 - [Sample, Then Refine: Training-Free Diffusion for Offline Global Trajectory Planning](/mtod/)
 - [A Predictor-Corrector World Model: Two-Way Coupling of a Video Prior and a Metric 3D State](/two-way-world-model/)
+
+## 课程 Lab · ROB7104 Mathematics for Robotics
+
+- [Lab 4 · Linear Systems: Passive, Forced and Controlled](/rob7104/lab4/)

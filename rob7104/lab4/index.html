@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="ROB7104 Lab 4 — linear systems theory seen on three robots: passive, forced and controlled systems." />
+    <meta name="description" content="ROB7104 Lab 4 — linear systems theory: passive, forced and controlled systems, the matrix exponential, resonance, controllability and observability." />
     <title>Lab 4 · Linear Systems: Let It Swing, Shake It, Steer It</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,20 +22,20 @@
       <header class="hero">
         <p class="kicker">ROB7104 · Lab 4</p>
         <h1>Let It Swing,<br />Shake It, Steer&nbsp;It</h1>
-        <p class="team">Linear systems theory on three robots · Mathematics for Robotics, MBZUAI</p>
+        <p class="team">Linear systems theory: passive, forced and controlled · Mathematics for Robotics, MBZUAI</p>
         <nav class="links" aria-label="Lab materials">
           <a href="Lab4.html">Read the notebook</a>
           <a href="Lab4_notebook.zip" download>Download notebook</a>
         </nav>
         <div class="cell hero-demo">
-          <video class="hero-video" controls autoplay muted loop playsinline preload="auto" src="media/hero.mp4" aria-label="Three robots: a drone with a slung load, an arm carrying a glass of water, a gantry crane"></video>
+          <video class="hero-video" controls autoplay muted loop playsinline preload="auto" src="media/hero.mp4" aria-label="A drone with a slung load, an arm carrying a glass of water, a gantry crane"></video>
         </div>
       </header>
 
       <section class="about" id="thread" aria-label="The main thread">
         <div class="thread">
           <div id="thread-formula">\[ x(t) \;=\; \htmlClass{term t-passive}{e^{At}x_0} \;+\; \int_0^t e^{A(t-\tau)}\,\htmlClass{term t-forced t-controlled}{g(\tau)}\,d\tau \]</div>
-          <p class="note">One formula for the whole lab. Three robots, each a moving support with something that swings below it.</p>
+          <p class="note">One formula for the whole lab: what the system does alone, plus what the forcing adds.</p>
         </div>
         <div class="about-grid three" style="margin-top: 14px">
           <a class="about-card pick" data-term="t-passive" href="#passive">
