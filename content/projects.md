@@ -13,3 +13,5 @@ ShowPostNavLinks: false
 
 - [Lab 3 · Stochastic Differential Equations: Random Paths and Their Densities](/rob7104/lab3/)
 - [Lab 4 · Linear Systems: Passive, Forced and Controlled](/rob7104/lab4/)
+- [Lab 5 · Kalman filtering and the stochastic cart](/rob7104/lab5/)
+- [Lab 6 · Optimization](/rob7104/lab6/)

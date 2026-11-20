@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="ROB7104 Lab 6 — optimization on one robot arm: gradient descent, Newton's method, inverse kinematics, noise, l1 sparsity, calculus of variations and optimization on manifolds." />
+    <title>Lab 6 · Optimization: Seven Ways to Reach</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <link rel="stylesheet" href="lab6.css" />
+    <script type="importmap">{"imports": {"three": "../assets/vendor/three.module.min.js"}}</script>
+  </head>
+  <body>
+    <div class="glow" aria-hidden="true"></div>
+    <main class="wrap">
+      <header class="hero">
+        <p class="kicker">ROB7104 · Lab 6</p>
+        <h1>Optimization:<br />Seven Ways to&nbsp;Reach</h1>
+        <p class="team">Slope, curvature, noise, corners, paths and manifolds, on one robot arm · Mathematics for Robotics, MBZUAI</p>
+        <nav class="links" aria-label="Lab materials">
+          <a href="Lab6.html">Read the notebook</a>
+          <a href="Lab6_notebook.zip" download>Download notebook</a>
+          <a href="../lab5/">Lab 5 page</a>
+        </nav>
+        <div class="cell hero-demo">
+          <video class="hero-video" controls autoplay muted loop playsinline preload="auto" src="media/hero.mp4" poster="media/hero_poster.png" aria-label="Four copies of one robot arm reach for the same target with four different methods"></video>
+        </div>
+      </header>
+
+      <section class="about" id="thread" aria-label="The main thread">
+        <div class="thread">
+          <div id="thread-formula">\[ x_{k+1} \;=\; \arg\min_{x\,\in\,\htmlClass{term t-p3}{\mathcal{X}}}\; \htmlClass{term t-p1}{\htmlClass{term t-p2}{g_k}^{\top}(x - x_k) + \tfrac12\,(x - x_k)^{\top} B_k\,(x - x_k)} \;+\; \htmlClass{term t-p2}{\lambda\lVert x\rVert_1} \]</div>
+          <div id="thread-formula-phone" class="f-phone">\[ \begin{aligned} &x_{k+1} \;=\; \arg\min_{x\,\in\,\htmlClass{term t-p3}{\mathcal{X}}} \\ &\quad \htmlClass{term t-p1}{\htmlClass{term t-p2}{g_k}^{\top}(x - x_k) + \tfrac12\,(x - x_k)^{\top} B_k\,(x - x_k)} \\ &\quad +\; \htmlClass{term t-p2}{\lambda\lVert x\rVert_1} \end{aligned} \]</div>
+          <p class="note">One idea for the whole lab: build a local model of the cost at the current point, then move to the model's minimum. The model must fit the structure of the problem.</p>
+        </div>
+        <div class="about-grid three" style="margin-top: 14px">
+          <a class="about-card pick" data-term="t-p1" href="#slope">
+            <p class="about-label">Slope and curvature</p>
+            <p><b>Choose \(B_k\).</b> \(B_k = I/\alpha\) is gradient descent, \(B_k = H\) is Newton's method, \(B_k = J^{\top}J\) is Gauss–Newton for inverse kinematics.</p>
+          </a>
+          <a class="about-card pick" data-term="t-p2" href="#noise">
+            <p class="about-label">Noise and corners</p>
+            <p><b>The slope \(g_k\) is noisy, or the cost has a corner.</b> Noise lets the arm escape and settle; the corner \(\lambda\lVert x\rVert_1\) is kept as it is and keeps joints still.</p>
+          </a>
+          <a class="about-card pick" data-term="t-p3" href="#beyond">
+            <p class="about-label">Beyond vectors</p>
+            <p><b>\(\mathcal{X}\) is not flat.</b> The unknown is a whole path of the hand, or a direction on a sphere, or a rotation.</p>
+          </a>
+        </div>
+      </section>
+
+      <section class="results" id="opening" aria-label="Section 0: opening">
+        <div class="section-head">
+          <p class="eyebrow">Section 0 · Opening</p>
+          <h2>One arm, one target, four methods</h2>
+          <p class="section-sub">Only the shoulder and the elbow move, so each pose is a point \(q\) on the landscape of <span style="white-space: nowrap">\(f(q) = \tfrac12\lVert p(q) - t\rVert^2\)</span>, half the squared distance from the tool to the target.</p>
+        </div>
+        <figure class="scene feature-panel active" id="d00-panel" data-feature="d00" data-demo="d00">
+          <div class="film no-clip">
+            <div class="film-text">
+              <h3>Four ways to reach</h3>
+              <p class="conclusion">How a method uses slope and curvature decides whether the arm creeps, arrives in a few steps, stops at the wrong pose, or trembles its way in. In the film at the top of the page, gradient descent needs 64 steps to bring the tool within 1 mm and safeguarded Newton 5.</p>
+            </div>
+          </div>
+          <div class="live">
+            <p class="live-head">Live · in your browser</p>
+            <style>#d00-panel .seg[data-ctl="method"] { flex-wrap: wrap; max-width: 100%; } #d00-panel canvas.land { cursor: default; }</style>
+            <p class="live-note"><b>Try:</b> press a method. The arm starts from the same hanging pose every time and reaches for the same <span class="c-green">green target</span>; the map beside it is the cost over the shoulder and elbow angles, and its white point is the arm.</p>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="land"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Method</span>
+              <span class="seg" data-ctl="method"><button data-v="gd" class="on">gradient descent</button><button data-v="noise">gradient descent + noise</button><button data-v="safe">safeguarded Newton</button><button data-v="newton">Newton's method</button></span>
+              <button data-ctl="replay">run again</button>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">View</span>
+              <label>speed <input type="range" data-ctl="speed" min="0.25" max="8" step="0.25" value="1" data-fmt="2" /><output></output></label>
+              <button data-ctl="all" class="on">keep all paths</button>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <p class="live-note" data-ctl="rule"></p>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>All four minimise the same \(f(q) = \tfrac12\lVert p(q) - t\rVert^2\) from the same start; only the rule for the next step differs. The target sits at 90&nbsp;% of the reach, where the valley of \(f\) is long and narrow (the two curvatures at the solution are shown below the buttons), so gradient descent with a large fixed step swings across the valley and creeps along it. Newton's method jumps to the stationary point of its local quadratic model; from this start the model is a dome, so it climbs to the maximum, the pose stretched away from the target, and stops there because the gradient is zero. Making the model's curvature positive (safeguarded Newton, with a line search) turns every step downhill: a few large steps. Noise in the gradient never lets the arm rest; it trembles around the solution.</p>
+            </details>
+          </div>
+        </figure>
+      </section>
+
+      <section class="results" id="slope" aria-label="Part 1: slope and curvature">
+        <div class="section-head">
+          <p class="eyebrow">Part 1</p>
+          <h2>Slope and curvature</h2>
+          <p class="section-sub">A point on the landscape is a pose of the arm: the two move together.</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Part 1 demos">
+          <button class="feature-tab active" data-feature="d11" role="tab" aria-selected="true">Step size</button>
+          <button class="feature-tab" data-feature="d12" role="tab" aria-selected="false">Newton's method</button>
+          <button class="feature-tab" data-feature="d13" role="tab" aria-selected="false">Inverse kinematics</button>
+        </div>
+        <figure class="scene feature-panel active" id="d11-panel" data-feature="d11" data-demo="d11">
+          <div class="film">
+            <div class="cell film-cell"><video controls muted loop playsinline preload="none" poster="media/s11a_stepsize_poster.png" src="media/s11a_stepsize.mp4"></video></div>
+            <div class="film-text">
+              <p class="film-num">1.1</p>
+              <h3>Gradient descent and step size</h3>
+              <p class="conclusion">Along each curvature direction the error is multiplied by \(1 - \alpha\lambda_i\) every step: a small step creeps, a step just below \(2/\lambda_{\max}\) swings across the valley and still arrives, a larger one swings wider every step until the arm rocks for ever between two poses away from the target.</p>
+            </div>
+          </div>
+          <div class="live">
+            <p class="live-head">Live · in your browser</p>
+            <style>@media (max-width: 720px) { .d11-hud { position: static !important; max-width: none !important; border-radius: 0 !important; font-size: 11px !important; } #d11-panel .duo .cell canvas.view3d { height: 300px !important; min-height: 0 !important; aspect-ratio: auto !important; } }</style>
+            <p class="live-note"><b>Try:</b> press <span class="c-yellow">near the limit</span>, then <span class="c-red">beyond the limit</span>. Click the map to start somewhere else, or the lower chart to pick a step size. Then slide the target towards the reach limit and switch momentum on.</p>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="d11-hud" data-ctl="hud" style="position:absolute;left:12px;bottom:10px;max-width:calc(100% - 24px);padding:7px 11px;border-radius:4px;background:rgba(8,9,12,0.66);color:var(--mute);font-family:var(--mono);font-size:12px;line-height:1.55;pointer-events:none;"></div>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell" style="margin-top:0;display:flex;flex-direction:column;">
+                <canvas class="land"></canvas>
+                <canvas class="fac" style="aspect-ratio:auto;height:158px;min-height:0;flex:none;cursor:crosshair;"></canvas>
+              </div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Step</span>
+              <label>step size α <input type="range" data-ctl="alpha" min="0.1" max="6" step="any" value="3.64" data-fmt="2" /><output></output></label>
+              <button data-ctl="small"><span class="c-grey">●</span> small</button>
+              <button data-ctl="near"><span class="c-yellow">●</span> near the limit</button>
+              <button data-ctl="beyond"><span class="c-red">●</span> beyond the limit</button>
+              <button data-ctl="mom">momentum</button>
+              <span class="ctl-label">Target</span>
+              <label>distance / reach <input type="range" data-ctl="dist" min="0.45" max="0.97" step="any" value="0.656575495026843" data-fmt="2" /><output></output></label>
+              <button data-ctl="restart">restart</button>
+              <button data-ctl="zoom" class="on">zoom on the valley</button>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>Near the minimum the cost is a bowl whose curvatures \(\lambda_1 \le \lambda_2\) are the eigenvalues of the Hessian (here \(J^\top J\), because the tool reaches the target). One step \(q_{k+1} = q_k - \alpha\nabla f(q_k)\) multiplies the error along each eigen-direction by \(1 - \alpha\lambda_i\) (lower chart): below \(2/\lambda_2\) both shrink, above it the steep one grows. On the arm the cost is bounded, so a step beyond the limit does not run off: at \(\alpha = 2.25/\lambda_2\) all 2000 random starts end swinging between two poses (checked to 20&nbsp;000 steps). \(2/\lambda_2\) (3.83 at the default target) is a local limit; \(2/L\), with \(L\) the largest curvature over all joint angles (2.42), is the step that goes downhill from every start.</p>
+              <p>The condition number \(\lambda_2/\lambda_1 = (\sigma_1/\sigma_2)^2\) is the squared length-to-width ratio of the <span class="c-pink">pink ellipse</span> of tool motions: 6.4 at the default target, 63 at 0.95 of the reach. The flat factor \(1 - \alpha\lambda_1\) then creeps towards 1. Momentum (heavy ball, \(\beta = (1 - \sqrt{\alpha\lambda_1})^2\)) turns it into \(1 - \sqrt{\alpha\lambda_1}\): with the target at 0.95 of the reach, \(\alpha = 1.9/\lambda_2\) and the start at the default target's solution, 43 steps to 1&nbsp;mm instead of 123.</p>
+            </details>
+          </div>
+        </figure>
+        <figure class="scene feature-panel" id="d12-panel" data-feature="d12" data-demo="d12">
+          <div class="film">
+            <div class="cell film-cell"><video controls muted loop playsinline preload="none" poster="media/s12_newton_poster.png" src="media/s12_newton.mp4"></video></div>
+            <div class="film-text">
+              <p class="film-num">1.2</p>
+              <h3>Newton's method and curvature</h3>
+              <p class="conclusion">Newton's method jumps to the centre of a local quadratic model: 4 steps where gradient descent needs 176 (to \(\lVert g\rVert \le 10^{-9}\)), but from about 80&nbsp;% of starts it ends at a saddle or at the maximum. Making the model's curvature positive keeps it going downhill.</p>
+            </div>
+          </div>
+          <div class="live">
+            <p class="live-head">Live · in your browser</p>
+            <style>
+              #d12-panel .d12-tag { position: absolute; padding: 2px 7px; border-radius: 3px; background: rgba(8, 9, 12, 0.6);
+                font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; pointer-events: none; transform: translate(-50%, 0);
+                transition: opacity 0.25s ease; }
+              #d12-panel .d12-legend { position: absolute; left: 10px; bottom: 8px; font-size: 11px; color: var(--mute);
+                line-height: 1.5; pointer-events: none; background: rgba(8, 9, 12, 0.55); padding: 3px 8px; border-radius: 3px; }
+              #d12-panel .readout[data-ctl="shares"] { margin-left: 0; flex-basis: 100%; }
+              #d12-panel .d12-key { margin: 6px 2px 0; font-size: 12px; line-height: 1.5; color: var(--mute); }
+              @media (max-width: 600px) { #d12-panel .d12-legend { display: none; } }
+            </style>
+            <p class="live-note"><b>Try:</b> click the map to pick a start, then <b>step</b>: Newton's method jumps to the centre
+              of the local quadratic model, a <span class="c-green">bowl</span>, a <span class="c-red">dome</span> or a
+              <span class="c-yellow">saddle</span>. Switch on the safeguard and the basin map to see where every start ends.</p>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <span class="d12-tag" data-d12="model">local quadratic model</span>
+                <span class="d12-legend" data-d12="legend3d"></span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="land"></canvas></div>
+            </div>
+            <p class="d12-key"><span class="c-green">●</span> minimum, elbow up · <span class="c-blue">●</span> minimum, elbow down · <span class="c-yellow">×</span> saddle · <span class="c-red">▲</span> maximum · ○ start · dashed: step to the model's centre · basin map: each start coloured by where it ends</p>
+            <div class="controls">
+              <span class="ctl-label">Method</span>
+              <span class="seg" data-ctl="method"><button data-v="gd">gradient descent</button><button data-v="newton" class="on">Newton</button><button data-v="safe">safeguarded Newton</button></span>
+              <span class="ctl-label">Start</span>
+              <span class="seg" data-ctl="start"><button data-v="A" class="on">A</button><button data-v="B">B</button><button data-v="C">C</button></span>
+              <button data-ctl="step">step</button>
+              <button data-ctl="run">run</button>
+              <button data-ctl="reset">reset</button>
+              <button data-ctl="model" class="on">quadratic model</button>
+              <button data-ctl="basin">basin map</button>
+              <span class="readout" data-ctl="info"></span>
+              <span class="readout" data-ctl="shares"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>At the current angles Newton's method replaces the cost by its quadratic model
+                \(m(d) = f + g^\top d + \tfrac12 d^\top H d\) and jumps to the model's stationary point \(d = -H^{-1}g\). That point
+                is the bottom of a bowl only if \(H\) is positive definite; for this arm and target that holds on 14&nbsp;% of joint
+                space. On a dome Newton jumps to the top, on a saddle to the saddle point, so from 20.2&nbsp;% / 59.0&nbsp;% /
+                20.8&nbsp;% of starts it ends at a minimum / saddle / the maximum (200 000 starts). The safeguard uses
+                \(H + \tau I\), with \(\tau\) chosen so that every negative curvature becomes positive (the model becomes a
+                bowl), plus backtracking: every step goes
+                downhill, and near a minimum \(\tau = 0\), so the last steps are pure Newton steps.</p>
+            </details>
+          </div>
+        </figure>
+        <figure class="scene feature-panel" id="d13-panel" data-feature="d13" data-demo="d13">
+          <div class="film">
+            <div class="cell film-cell"><video controls muted loop playsinline preload="none" poster="media/s13_ik_poster.png" src="media/s13_ik.mp4"></video></div>
+            <div class="film-text">
+              <p class="film-num">1.3</p>
+              <h3>Inverse kinematics is optimization</h3>
+              <p class="conclusion">Reaching a pose is least squares on the pose error. The Jacobian transpose is gradient descent and slow; Gauss–Newton is fast but thrashes when the target is out of reach; enough damping stretches the arm calmly towards it.</p>
+            </div>
+          </div>
+          <div class="live">
+            <p class="live-head">Live · in your browser</p>
+            <p class="live-note"><b>Try:</b> pick a solver, then press <b>loop</b> to send the <span class="c-green">target</span> out of reach and back, or move it yourself with the sliders or <kbd>←</kbd><kbd>→</kbd> (out, in) and <kbd>↑</kbd><kbd>↓</kbd> (up, down). Out of reach, Gauss–Newton thrashes; damped least squares stretches and rests only if \(\lambda\) is large enough.</p>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot" style="min-height: 430px"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Solver</span>
+              <span class="seg" data-ctl="method"><button data-v="jt">J transpose</button><button data-v="gn">Gauss–Newton</button><button data-v="dls" class="on">damped</button></span>
+              <label>damping λ <input type="range" data-ctl="lam" min="0.001" max="0.3" step="0.001" value="0.1" data-fmt="3" /><output></output></label>
+              <label>iterations / s <input type="range" data-ctl="rate" min="1" max="20" step="1" value="6" data-fmt="0" /><output></output></label>
+              <button data-ctl="run" class="on">run</button>
+              <button data-ctl="step">one step</button>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Target</span>
+              <label>x <input type="range" data-ctl="tx" min="0.30" max="1.15" step="0.001" value="0.544" data-fmt="2" data-unit=" m" /><output></output></label>
+              <label>y <input type="range" data-ctl="ty" min="-0.50" max="0.40" step="0.001" value="-0.082" data-fmt="2" data-unit=" m" /><output></output></label>
+              <label>z <input type="range" data-ctl="tz" min="-0.10" max="0.70" step="0.001" value="0.283" data-fmt="2" data-unit=" m" /><output></output></label>
+              <button data-ctl="loop">loop</button>
+              <button data-ctl="reset">reset</button>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>Inverse kinematics minimises \(\tfrac12\lVert e(q)\rVert^2\), with \(e\) the position error and \(0.3\) m/rad times the orientation error. Write the Jacobian as \(J = \sum_i \sigma_i u_i v_i^\top\). Each solver moves the joints along \(v_i\) by a gain times \(u_i^\top e\): the Jacobian transpose (gradient descent) uses \(\alpha\sigma_i\), Gauss–Newton \(1/\sigma_i\), damped least squares \(\sigma_i/(\sigma_i^2+\lambda^2) \le 1/(2\lambda)\). The right panel draws these gains and puts the current \(\sigma_i\) on them. Near the reach limit the smallest \(\sigma_i\) goes to zero: Gauss–Newton's gain blows up (steps of tens of radians in the clip), the transpose's gain vanishes (it crawls), and the damped gain stays bounded. At the far point of the loop a fixed damping must exceed about 0.08 to come to rest (just above it the hops die out slowly); 0.05 hops for ever. The threshold grows like the square root of how far the target lies out of reach, so a damping that rests at one unreachable target hops at a farther one. At the stretched pose the elbow-up and elbow-down solutions meet, so the arm may come back with its elbow on the other side; the solver does not choose.</p>
+            </details>
+          </div>
+        </figure>
+      </section>
+
+      <section class="results" id="noise" aria-label="Part 2: noise and corners">
+        <div class="section-head">
+          <p class="eyebrow">Part 2</p>
+          <h2>Noise and corners</h2>
+          <p class="section-sub">The slope arrives with noise, or the cost has a sharp corner.</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Part 2 demos">
+          <button class="feature-tab active" data-feature="d21" role="tab" aria-selected="true">Noisy gradients</button>
+          <button class="feature-tab" data-feature="d22" role="tab" aria-selected="false">\(\ell_1\) and sparsity</button>
+        </div>
+        <figure class="scene feature-panel active" id="d21-panel" data-feature="d21" data-demo="d21">
+          <div class="film">
+            <div class="cell film-cell"><video controls muted loop playsinline preload="none" poster="media/s21a_noise_poster.png" src="media/s21a_noise.mp4"></video></div>
+            <div class="film-text">
+              <p class="film-num">2.1</p>
+              <h3>Gradient descent with noise</h3>
+              <p class="conclusion">Noise moves the arm off the stretched-away pose, where the gradient is zero, and splits the crowd between the two solutions. There the tool trembles in a cloud whose size the lecture's formula \(v_i = \alpha\sigma_g^2/(\lambda_i(2 - \alpha\lambda_i))\) predicts; a smaller step shrinks it.</p>
+            </div>
+          </div>
+          <div class="live">
+            <p class="live-head">Live · in your browser</p>
+            <p class="live-note"><b>Try:</b> press <i>start stretched away</i>: the noisy arms split between <span class="c-green">elbow up</span> and <span class="c-blue">elbow down</span> while the solid, noise-free arm lingers. Halve the step in <i>zoom at the minimum</i>: cloud and <span class="c-yellow">formula's ellipse</span> shrink together. Then try <i>temperature</i> and cooling.</p>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="land"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Noise</span>
+              <span class="seg" data-ctl="mode"><button data-v="noise" class="on">gradient noise</button><button data-v="temp">temperature</button></span>
+              <button data-ctl="away">start stretched away</button>
+              <button data-ctl="down">start elbow down</button>
+              <span class="seg" data-ctl="view"><button data-v="map" class="on">landscape</button><button data-v="zoom">zoom at the minimum</button><button data-v="share">share vs T</button></span>
+            </div>
+            <div class="controls">
+              <label>noise \(\sigma_g\) <input type="range" data-ctl="sigma" min="0" max="0.08" step="0.005" value="0.04" data-fmt="3" /><output></output></label>
+              <label>step \(\alpha\) <input type="range" data-ctl="alpha" min="0.05" max="1.5" step="0.05" value="1" data-fmt="2" /><output></output></label>
+              <label>arms <input type="range" data-ctl="arms" min="10" max="200" step="10" value="200" data-fmt="0" /><output></output></label>
+              <label>speed <input type="range" data-ctl="speed" min="0" max="5" step="0.25" value="1" /><output></output></label>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Temperature</span>
+              <label>\(T\) <input type="range" data-ctl="T" min="0.002" max="0.03" step="0.001" value="0.012" data-fmt="3" /><output></output></label>
+              <span class="seg" data-ctl="K"><button data-v="1000" class="on">10³ steps</button><button data-v="10000">10⁴</button><button data-v="100000">10⁵</button><button data-v="1000000">10⁶</button></span>
+              <button data-ctl="cool">cool 0.03 → 0.002</button>
+            </div>
+            <div class="controls">
+              <span class="readout" data-ctl="info" style="margin-left: 0"></span>
+              <span class="readout" data-ctl="theory"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>At the stretched-away pose the gradient is zero, so plain gradient descent has nothing to follow; the noise in \(x_{k+1} = x_k - \alpha(\nabla f(x_k) + \sigma_g\xi_k)\) pushes every run off, and the crowd splits about evenly between the two solutions (50.1&nbsp;% elbow up in 20000 runs). Near a minimum each curvature direction is a damped random walk \(y \leftarrow (1-\alpha\lambda_i)\,y - \alpha\sigma_g\xi\), whose variance settles at \(v_i = \alpha\sigma_g^2/(\lambda_i(2-\alpha\lambda_i))\): the soft direction trembles most, and a smaller step shrinks the cloud. The solid arm has no noise: in exact arithmetic it would stay at the maximum for ever, but in floating point the computed gradient there is about \(10^{-15}\), and the unstable direction multiplies that offset by \(1+\alpha|\lambda_{\min}|\) per step, so it leaves after about \(\ln(0.3/\delta)/\ln(1+\alpha|\lambda_{\min}|)\) steps (\(\delta\) = the first offset): rounding acts as a tiny noise, and the readout compares this law with the step it actually leaves.</p>
+              <p>With <i>temperature</i> the noise becomes \(\sqrt{2T\alpha}\,\xi\) and a preference for a high elbow (\(w = 0.04\) m) makes <span class="c-green">elbow up</span> the deeper well. At a fixed \(T\) the runs share the wells as \(e^{-f/T}\) predicts once they have had time to cross the saddle between the wells (about 7300 steps at \(T = 0.012\), longer when colder; the point stays hollow until then); cooling from \(T = 0.03\) to \(0.002\) brings 10.7&nbsp;% of the runs to the deeper well in \(10^3\) steps and 93.8&nbsp;% in \(10^6\) steps (2000 runs each): slow cooling is what matters.</p>
+            </details>
+          </div>
+        </figure>
+        <figure class="scene feature-panel" id="d22-panel" data-feature="d22" data-demo="d22">
+          <div class="film">
+            <div class="cell film-cell"><video controls muted loop playsinline preload="none" poster="media/s22_l1_poster.png" src="media/s22_l1.mp4"></video></div>
+            <div class="film-text">
+              <p class="film-num">2.2</p>
+              <h3>\(\ell_1\) and sparsity</h3>
+              <p class="conclusion">In this reach an \(\ell_1\) penalty on the joint motion moves three joints and leaves the others exactly still; an \(\ell_2\) penalty with the same gap to the target moves five, each a little.</p>
+            </div>
+          </div>
+          <div class="live">
+            <p class="live-head">Live · in your browser</p>
+            <style>
+              #d22-panel canvas.d22-pic { cursor: default; }
+              #d22-panel .d22-strip-cell { margin-top: 14px; }
+              #d22-panel canvas.d22-strip { aspect-ratio: auto; height: 250px; min-height: 0; }
+              #d22-panel .d22-hud {
+                position: absolute; top: auto; bottom: 12px; left: 12px; display: flex; flex-direction: column; gap: 3px;
+                font-size: 14px; line-height: 1.2; pointer-events: none; text-shadow: 0 1px 3px #000;
+              }
+              #d22-panel .d22-hud span { color: var(--mute); font-family: var(--mono); font-size: 12px; }
+              #d22-panel .d22-gap {
+                position: absolute; display: none; transform: translate(-115%, -50%); pointer-events: none;
+                color: #fc6255; font-family: var(--mono); font-size: 12px; font-weight: 600; text-shadow: 0 1px 3px #000;
+              }
+              @media (max-width: 620px) { #d22-panel canvas.d22-strip { height: 440px; } }
+            </style>
+            <p class="live-note"><b>Try:</b> raise the penalty weight and watch the rings turn grey one joint at a time, switch
+              between <span class="c-yellow">ℓ₁</span> and <span class="c-blue">ℓ₂</span>, then move the target.</p>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="d22-hud"></div>
+                <span class="d22-gap"></span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="land d22-pic"></canvas></div>
+            </div>
+            <div class="cell d22-strip-cell"><canvas class="plot d22-strip"></canvas></div>
+            <div class="controls">
+              <span class="ctl-label">Penalty</span>
+              <label>weight λ/λmax <input type="range" data-ctl="lam" min="0.001" max="1.05" step="0.001" value="0.001" data-fmt="3" /><output></output></label>
+              <span class="seg" data-ctl="kind"><button data-v="l1" class="on">ℓ₁</button><button data-v="l2">ℓ₂</button></span>
+              <button data-ctl="sweep">sweep λ</button>
+              <button data-ctl="ghost">start pose</button>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Target</span>
+              <label>x <input type="range" data-ctl="tx" min="0.25" max="0.49" step="0.005" value="0.37" data-fmt="3" data-unit=" m" /><output></output></label>
+              <label>y <input type="range" data-ctl="ty" min="0.245" max="0.465" step="0.005" value="0.355" data-fmt="3" data-unit=" m" /><output></output></label>
+              <label>z <input type="range" data-ctl="tz" min="0.62" max="0.86" step="0.005" value="0.74" data-fmt="3" data-unit=" m" /><output></output></label>
+              <button data-ctl="reset">clip's target</button>
+              <span class="readout" data-ctl="tinfo"></span>
+            </div>
+            <details class="prompt"><summary>Why</summary><p>The proximal step of \(\lambda\lVert d\rVert_1\) is a soft
+              threshold: a joint whose gradient satisfies \(|g_j| \le \lambda\) stays exactly at zero. A position target is three
+              equations, so for this target three joints do all the work; \(\tfrac{\mu}{2}\lVert d\rVert_2^2\) (weight chosen for
+              the same gap) moves five, because the last joint cannot move the tool point. With three moving joints the penalty costs a gap
+              \(|p - t| = \lambda\,\lVert J_S^{-\top}\operatorname{sign}(d_S)\rVert\) (\(J\) at the solution), proportional to \(\lambda\), and nothing
+              moves once \(\lambda \ge \lambda_{\max} = \lVert J^\top (p_0 - t)\rVert_\infty\). The count of three holds for the
+              linearised problem; for the nonlinear reach some targets need four (try x = 0.25, y = 0.465, z = 0.86 m: joint 4 moves below \(\lambda/\lambda_{\max} \approx 0.02\)).</p></details>
+          </div>
+        </figure>
+      </section>
+
+      <section class="results" id="beyond" aria-label="Part 3: beyond vectors">
+        <div class="section-head">
+          <p class="eyebrow">Part 3</p>
+          <h2>Beyond vectors</h2>
+          <p class="section-sub">The unknown is a whole path, or a point on a curved set.</p>
+        </div>
+        <div class="feature-tabs" role="tablist" aria-label="Part 3 demos">
+          <button class="feature-tab active" data-feature="d31" role="tab" aria-selected="true">A whole path</button>
+          <button class="feature-tab" data-feature="d32" role="tab" aria-selected="false">On a manifold</button>
+        </div>
+        <figure class="scene feature-panel active" id="d31-panel" data-feature="d31" data-demo="d31">
+          <div class="film">
+            <div class="cell film-cell"><video controls muted loop playsinline preload="none" poster="media/s31_variational_poster.png" src="media/s31_variational.mp4"></video></div>
+            <div class="film-text">
+              <p class="film-num">3.1</p>
+              <h3>Calculus of variations</h3>
+              <p class="conclusion">When the unknown is the whole path of the hand, gradient descent irons out small wrinkles in a few steps but needs 1513 to bring every bead within 1 mm of the best path; Newton's method needs 4.</p>
+            </div>
+          </div>
+          <div class="live">
+            <p class="live-head">Live · in your browser</p>
+            <p class="live-note"><b>Try:</b> press <i>relax</i> and watch the fine wrinkles vanish at once while the big bend creeps in; then go <i>back to the hand-drawn path</i> and press <i>Newton step</i> four times. Move the pillar, let the end slide on the shelf, or double the beads.</p>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <span class="d31-lab" data-lab="A" style="position:absolute; pointer-events:none; font-weight:700; font-size:15px; color:#eeeeee; text-shadow:0 0 4px #000, 0 0 2px #000; display:none;">A</span>
+                <span class="d31-lab" data-lab="B" style="position:absolute; pointer-events:none; font-weight:700; font-size:15px; color:#83c167; text-shadow:0 0 4px #000, 0 0 2px #000; display:none;">B</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot" style="aspect-ratio: 5 / 6; height: auto; min-height: 0;"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Path</span>
+              <button data-ctl="gd">relax: <span class="c-grey">gradient descent</span></button>
+              <button data-ctl="newton"><span class="c-white">Newton</span> step</button>
+              <button data-ctl="reset">back to the hand-drawn path</button>
+              <button data-ctl="follow" class="on">hand follows the path</button>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Problem</span>
+              <label><span><span class="c-red">pillar</span> offset from line AB (+ = away from the robot)</span> <input type="range" data-ctl="pillar" min="-0.1" max="0.2" step="0.01" value="0.03" data-fmt="2" data-unit=" m" /><output></output></label>
+              <span class="seg" data-ctl="end"><button data-v="fixed" class="on">end at <span class="c-green">B</span></button><button data-v="free">end anywhere on the shelf</button></span>
+              <span class="seg" data-ctl="beads"><button data-v="20">20</button><button data-v="40" class="on">40</button><button data-v="80">80</button></span>
+              <span style="color: var(--mute); font-size: 13px;">segments</span>
+            </div>
+            <div class="controls">
+              <span class="readout" data-ctl="info" style="margin-left: 0;"></span>
+            </div>
+            <details class="prompt"><summary>Why</summary><p>The unknown is the whole path \(y(t)\) of the hand: \(J[y]=\int_0^T \tfrac12\lvert y'(t)\rvert^2+U(y(t))\,dt\), where \(U\) is a smooth penalty around the pillar (a potential, not a wall). The best path solves the Euler–Lagrange equation \(y''=\nabla U(y)\); a bead's colour is how far it is from satisfying it. With \(M\) segments of length \(h\), the energy's Hessian has eigenvalues \(\tfrac4h\sin^2\tfrac{j\pi}{2M}\) for a wave with \(j\) half-waves, so with step \(1/L\) a fine wrinkle shrinks by a large factor per step while the long bend shrinks only by about \(1-(\pi/2M)^2\): doubling the beads multiplies the steps by about four (419, 1513, 5892 steps to 1 mm for 20, 40, 80 segments). Newton's method uses that curvature and needs 4 iterations at all three resolutions (one solve would be exact only without the pillar, where the cost is quadratic). With the end free on the shelf the natural boundary condition \(y'(T)\cdot\tau=0\) holds, so the path arrives at a right angle; that needs the stated conditions: fixed final time, no cost on the end point, and an end that stays inside the shelf.</p></details>
+          </div>
+        </figure>
+        <figure class="scene feature-panel" id="d32-panel" data-feature="d32" data-demo="d32">
+          <div class="film">
+            <div class="cell film-cell"><video controls muted loop playsinline preload="none" poster="media/s32_manifold_poster.png" src="media/s32_manifold.mp4"></video></div>
+            <div class="film-text">
+              <p class="film-num">3.2</p>
+              <h3>Optimization on manifolds</h3>
+              <p class="conclusion">A plain gradient step pushes a unit vector off the sphere and a rotation off the rotations: the gripper shears. A step in the tangent space followed by a retraction keeps every iterate a rotation.</p>
+            </div>
+          </div>
+          <div class="live">
+            <p class="live-head">Live · in your browser</p>
+            <style>
+              #d32-panel .duo .cell canvas { min-height: 470px; }
+              @media (max-width: 820px) { #d32-panel .duo .cell canvas { min-height: 320px; } }
+            </style>
+            <p class="live-note"><b>Try:</b> the tool must point at the <span class="c-green">green target</span>; its pointing direction x is a point on the sphere. Press <b>step</b> a few times with the <span class="c-red">plain gradient step</span>, then with the <span class="c-white">tangent step + retraction</span>; switch the unknown to the full orientation to see the gripper shear. Orbit the 3D view: the sphere in the panel turns with it.</p>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Unknown</span>
+              <span class="seg" data-ctl="act"><button data-v="A" class="on">pointing direction x</button><button data-v="B">orientation X</button></span>
+              <span class="ctl-label">Step</span>
+              <span class="seg" data-ctl="method"><button data-v="plain" class="on">plain step</button><button data-v="tangent">tangent step only</button><button data-v="retract">tangent step + retraction</button></span>
+            </div>
+            <div class="controls">
+              <label>step size α <input type="range" data-ctl="alpha" min="0.1" max="1.5" step="0.05" value="0.6" data-fmt="2" /><output></output></label>
+              <button data-ctl="step">step</button>
+              <button data-ctl="run">run to 10</button>
+              <button data-ctl="reset">reset</button>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Target</span>
+              <label><span class="c-green">left–right</span> <input type="range" data-ctl="az" min="-45" max="35" step="0.01" value="19.29" data-fmt="0" data-unit="°" /><output></output></label>
+              <label><span class="c-green">up–down</span> <input type="range" data-ctl="el" min="-55" max="35" step="0.01" value="8.06" data-fmt="0" data-unit="°" /><output></output></label>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>The tool's pointing direction is a unit vector, a point on the sphere \(x^\top x = 1\); the whole tool orientation is a rotation, \(X^\top X = I\). The cost \(f(x) = -t^\top x\) has the ordinary gradient \(g = -t\). The plain step \(x - \alpha g\) moves on a straight line and leaves the sphere (\(|x| = 2.18\) after three steps at \(\alpha = 0.6\)); on the matrix it stretches and shears the gripper. The tangent step keeps only the part of the gradient along the sphere, \((I - xx^\top)g\), and the retraction pulls the trial point back: \(x \leftarrow (x+v)/|x+v|\), and for rotations the Q factor of a QR decomposition. Every iterate then satisfies the constraint to rounding. Without the retraction each tangent step still lands off the sphere; how far depends on the step size and on the form of the projection. At the answer the ordinary gradient is not zero: it is normal to the sphere, so its tangent part is zero.</p>
+            </details>
+          </div>
+        </figure>
+      </section>
+
+      <section class="results" id="summary" aria-label="Summary">
+        <div class="section-head">
+          <p class="eyebrow">In one table</p>
+          <h2>Match the model to the problem</h2>
+        </div>
+        <table class="summary">
+          <thead><tr><th>The problem</th><th>The local model</th><th>The method</th><th>Demo</th></tr></thead>
+          <tbody>
+            <tr><td>Only the slope is known</td><td>Tangent plane plus a step penalty</td><td><b>Gradient descent</b></td><td><a href="#d11">1.1</a></td></tr>
+            <tr><td>The curvature is known</td><td>A quadratic: bowl or saddle</td><td><b>Newton's method</b></td><td><a href="#d12">1.2</a></td></tr>
+            <tr><td>A sum of squared residuals</td><td>Linearised residuals</td><td><b>Gauss–Newton, damped least squares</b></td><td><a href="#d13">1.3</a></td></tr>
+            <tr><td>The slope is noisy</td><td>Slope plus a random term</td><td><b>Noisy gradient descent</b></td><td><a href="#d21">2.1</a></td></tr>
+            <tr><td>The cost has a corner</td><td>Smooth part linearised, corner kept</td><td><b>Proximal gradient</b></td><td><a href="#d22">2.2</a></td></tr>
+            <tr><td>The unknown is a curve</td><td>Vary the whole curve</td><td><b>Euler–Lagrange</b></td><td><a href="#d31">3.1</a></td></tr>
+            <tr><td>The unknown lies on a curved set</td><td>Step in the tangent space, then pull back</td><td><b>Gradient descent on a manifold</b></td><td><a href="#d32">3.2</a></td></tr>
+          </tbody>
+        </table>
+        <p class="part-note">The reasoning behind every demo, with derivations, is in <a href="Lab6.html" style="color: var(--accent)">the notebook</a>.</p>
+      </section>
+
+      <section class="results" id="films" aria-label="Films from the notebook">
+        <div class="section-head">
+          <p class="eyebrow">Gallery</p>
+          <h2>The films from the notebook</h2>
+          <p class="section-sub">Rendered with MuJoCo. The solid arm is the current iterate; its point on the landscape moves with it.</p>
+        </div>
+        <div class="style-grid">
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s00_opening_poster.png" src="media/s00_opening.mp4"></video></div><p><b>Four ways to reach.</b> Gradient descent, safeguarded Newton, Newton and noisy gradient descent on the same arm.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s11a_stepsize_poster.png" src="media/s11a_stepsize.mp4"></video></div><p><b>Step size.</b> Three step sizes: creep, swing in, swing for ever.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s12_newton_poster.png" src="media/s12_newton.mp4"></video></div><p><b>Newton's method.</b> Fast near a minimum; elsewhere drawn to saddles and the maximum.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s13_ik_poster.png" src="media/s13_ik.mp4"></video></div><p><b>Inverse kinematics.</b> Jacobian transpose, Gauss–Newton and damped least squares on six joints.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s21a_noise_poster.png" src="media/s21a_noise.mp4"></video></div><p><b>Noise.</b> Two hundred arms leave the maximum and settle into two trembling clouds.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s22_l1_poster.png" src="media/s22_l1.mp4"></video></div><p><b>\(\ell_1\) and sparsity.</b> Three joints move under \(\ell_1\), five under \(\ell_2\).</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s31_variational_poster.png" src="media/s31_variational.mp4"></video></div><p><b>A whole path.</b> A string of beads relaxes around a pillar.</p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s32_manifold_poster.png" src="media/s32_manifold.mp4"></video></div><p><b>On a manifold.</b> A plain step against a tangent step with retraction.</p></div>
+        </div>
+      </section>
+
+      <footer class="credits">
+        <h2 class="credits-title">Mathematics for Robotics, MBZUAI</h2>
+        <p>ROB7104 · Lab 6 · Optimization</p>
+        <p class="notes">The arm moves kinematically: joint angles are set by the methods, no friction or contact is simulated. Drawn with <a href="https://mujoco.org/" target="_blank" rel="noreferrer">MuJoCo</a> and three.js (MIT);
+          arm model from <a href="https://github.com/google-deepmind/mujoco_menagerie" target="_blank" rel="noreferrer">MuJoCo Menagerie</a> (Universal Robots UR5e, BSD-3-Clause, <a href="models/LICENSE">licence</a>).</p>
+      </footer>
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (window.renderMathInElement) {
+          renderMathInElement(document.body, {
+            delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }],
+            trust: true, strict: false, throwOnError: false,
+          });
+          document.body.dataset.katex = '1';
+        }
+      });
+    </script>
+    <script src="../assets/site.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

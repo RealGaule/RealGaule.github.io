@@ -1,0 +1,286 @@
+{
+ "written": "2026-11-20 04:57:57",
+ "source": "web/export_models.py",
+ "models": [
+  {
+   "file": "lab6_arm.mjb",
+   "bytes": 3022106,
+   "megabytes": 3.022,
+   "ngeom": 36,
+   "nmesh": 20,
+   "triangles": 16463,
+   "vertices": 9154,
+   "nq": 6,
+   "mocap_bodies": [],
+   "tool_point_max_error_m": 2.220446049250313e-16,
+   "mujoco_version": "3.12.0"
+  },
+  {
+   "file": "lab6_arm_props.mjb",
+   "bytes": 3025893,
+   "megabytes": 3.026,
+   "ngeom": 43,
+   "nmesh": 20,
+   "triangles": 16463,
+   "vertices": 9154,
+   "nq": 6,
+   "mocap_bodies": [
+    "pillar",
+    "shelf"
+   ],
+   "tool_point_max_error_m": 2.220446049250313e-16,
+   "mujoco_version": "3.12.0"
+  }
+ ],
+ "pedestal_height_m": 1.0,
+ "note_frames": "web/js/sim6.js and sim/arm.py have the arm's base at the origin; in these files the base is on the pedestal: add [0, 0, pedestal_height_m] to every position.",
+ "joints": [
+  "shoulder_pan_joint",
+  "shoulder_lift_joint",
+  "elbow_joint",
+  "wrist_1_joint",
+  "wrist_2_joint",
+  "wrist_3_joint"
+ ],
+ "tool_site": "attachment_site",
+ "props": {
+  "pillar": {
+   "pos": [
+    0.55,
+    -0.2
+   ],
+   "radius": 0.045,
+   "height": 1.6
+  },
+  "shelf": {
+   "pos": [
+    0.45,
+    -0.55,
+    1.25
+   ],
+   "size": [
+    0.5,
+    0.22
+   ],
+   "yaw": 0.0
+  },
+  "note": "mocap bodies; pillar origin at its foot, shelf origin at the centre of its top face"
+ },
+ "licence": "meshes from the MuJoCo Menagerie UR5e model, BSD-3-Clause, see LICENSE in this folder",
+ "face_budget": 14000,
+ "meshes": [
+  {
+   "mesh": "base_0",
+   "method": "vertex clustering (cell 4.5 mm)",
+   "triangles_before": 2240,
+   "triangles_after": 252,
+   "vertices_after": 162,
+   "deviation_mm_mean": 0.7814355115753606,
+   "deviation_mm_p99": 1.126835598579212,
+   "deviation_mm_max": 1.2251119358670715
+  },
+  {
+   "mesh": "base_1",
+   "method": "vertex clustering (cell 6.0 mm)",
+   "triangles_before": 2598,
+   "triangles_after": 1097,
+   "vertices_after": 579,
+   "deviation_mm_mean": 0.3524146414280871,
+   "deviation_mm_p99": 0.9716150157379656,
+   "deviation_mm_max": 2.5915966461723245
+  },
+  {
+   "mesh": "shoulder_0",
+   "method": "quadric (agg 7)",
+   "triangles_before": 11435,
+   "triangles_after": 1287,
+   "vertices_after": 677,
+   "deviation_mm_mean": 0.3055072596381634,
+   "deviation_mm_p99": 1.020884498183039,
+   "deviation_mm_max": 1.7628579379140408
+  },
+  {
+   "mesh": "shoulder_1",
+   "method": "vertex clustering (cell 4.5 mm)",
+   "triangles_before": 2268,
+   "triangles_after": 254,
+   "vertices_after": 167,
+   "deviation_mm_mean": 0.7597139308335598,
+   "deviation_mm_p99": 1.099342561313739,
+   "deviation_mm_max": 1.2058917409238767
+  },
+  {
+   "mesh": "shoulder_2",
+   "method": "quadric (agg 3)",
+   "triangles_before": 9587,
+   "triangles_after": 1079,
+   "vertices_after": 603,
+   "deviation_mm_mean": 0.39885660948949225,
+   "deviation_mm_p99": 1.153341639829968,
+   "deviation_mm_max": 3.6143887339002596
+  },
+  {
+   "mesh": "upperarm_0",
+   "method": "vertex clustering (cell 6.0 mm)",
+   "triangles_before": 620,
+   "triangles_after": 456,
+   "vertices_after": 287,
+   "deviation_mm_mean": 0.476533550267727,
+   "deviation_mm_p99": 1.2366704844931098,
+   "deviation_mm_max": 2.377218091595102
+  },
+  {
+   "mesh": "upperarm_1",
+   "method": "vertex clustering (cell 6.0 mm)",
+   "triangles_before": 4255,
+   "triangles_after": 506,
+   "vertices_after": 424,
+   "deviation_mm_mean": 0.2380945828313386,
+   "deviation_mm_p99": 0.4625354222324332,
+   "deviation_mm_max": 0.85149803767771
+  },
+  {
+   "mesh": "upperarm_2",
+   "method": "vertex clustering (cell 6.0 mm)",
+   "triangles_before": 14489,
+   "triangles_after": 1960,
+   "vertices_after": 962,
+   "deviation_mm_mean": 0.5605637122012624,
+   "deviation_mm_p99": 1.454197777993876,
+   "deviation_mm_max": 3.8998265047790084
+  },
+  {
+   "mesh": "upperarm_3",
+   "method": "quadric (agg 7)",
+   "triangles_before": 20756,
+   "triangles_after": 2338,
+   "vertices_after": 1218,
+   "deviation_mm_mean": 0.44900249486055505,
+   "deviation_mm_p99": 1.6330760217557503,
+   "deviation_mm_max": 3.7644111566823097
+  },
+  {
+   "mesh": "forearm_0",
+   "method": "quadric (agg 7)",
+   "triangles_before": 6540,
+   "triangles_after": 736,
+   "vertices_after": 387,
+   "deviation_mm_mean": 0.3695168815129535,
+   "deviation_mm_p99": 1.78106820135658,
+   "deviation_mm_max": 2.689281368095953
+  },
+  {
+   "mesh": "forearm_1",
+   "method": "welded only",
+   "triangles_before": 321,
+   "triangles_after": 321,
+   "vertices_after": 201,
+   "deviation_mm_mean": 0.0,
+   "deviation_mm_p99": 0.0,
+   "deviation_mm_max": 0.0
+  },
+  {
+   "mesh": "forearm_2",
+   "method": "vertex clustering (cell 5.5 mm)",
+   "triangles_before": 3696,
+   "triangles_after": 416,
+   "vertices_after": 316,
+   "deviation_mm_mean": 0.47616675097702393,
+   "deviation_mm_p99": 0.946231430987946,
+   "deviation_mm_max": 1.0527752882841204
+  },
+  {
+   "mesh": "forearm_3",
+   "method": "vertex clustering (cell 6.0 mm)",
+   "triangles_before": 4499,
+   "triangles_after": 1146,
+   "vertices_after": 662,
+   "deviation_mm_mean": 0.39106945942811605,
+   "deviation_mm_p99": 1.0471702249260035,
+   "deviation_mm_max": 2.527057562721424
+  },
+  {
+   "mesh": "wrist1_0",
+   "method": "quadric (agg 7)",
+   "triangles_before": 1149,
+   "triangles_after": 128,
+   "vertices_after": 72,
+   "deviation_mm_mean": 0.473130296827342,
+   "deviation_mm_p99": 1.1139204958601898,
+   "deviation_mm_max": 2.9215099224734478
+  },
+  {
+   "mesh": "wrist1_1",
+   "method": "quadric (agg 7)",
+   "triangles_before": 9513,
+   "triangles_after": 1070,
+   "vertices_after": 580,
+   "deviation_mm_mean": 0.2608983193385544,
+   "deviation_mm_p99": 0.8913814575682334,
+   "deviation_mm_max": 1.6169236092383144
+  },
+  {
+   "mesh": "wrist1_2",
+   "method": "vertex clustering (cell 5.1 mm)",
+   "triangles_before": 6626,
+   "triangles_after": 721,
+   "vertices_after": 400,
+   "deviation_mm_mean": 0.4054958546203225,
+   "deviation_mm_p99": 1.034266601930729,
+   "deviation_mm_max": 1.8303815634784084
+  },
+  {
+   "mesh": "wrist2_0",
+   "method": "quadric (agg 7)",
+   "triangles_before": 3451,
+   "triangles_after": 389,
+   "vertices_after": 205,
+   "deviation_mm_mean": 0.20145762000022216,
+   "deviation_mm_p99": 0.7980880940372382,
+   "deviation_mm_max": 2.1487082088473968
+  },
+  {
+   "mesh": "wrist2_1",
+   "method": "quadric (agg 7)",
+   "triangles_before": 8310,
+   "triangles_after": 935,
+   "vertices_after": 503,
+   "deviation_mm_mean": 0.26812151674402757,
+   "deviation_mm_p99": 0.9750400855642662,
+   "deviation_mm_max": 1.4679114500593293
+  },
+  {
+   "mesh": "wrist2_2",
+   "method": "vertex clustering (cell 4.6 mm)",
+   "triangles_before": 8519,
+   "triangles_after": 933,
+   "vertices_after": 508,
+   "deviation_mm_mean": 0.2954553639577888,
+   "deviation_mm_p99": 1.0167298219009004,
+   "deviation_mm_max": 1.789668527876707
+  },
+  {
+   "mesh": "wrist3",
+   "method": "vertex clustering (cell 6.0 mm)",
+   "triangles_before": 911,
+   "triangles_after": 439,
+   "vertices_after": 241,
+   "deviation_mm_mean": 0.36554750115489754,
+   "deviation_mm_p99": 1.5251103462075148,
+   "deviation_mm_max": 2.8145334258531354
+  }
+ ],
+ "triangles_before": 121783,
+ "triangles_after": 16463,
+ "methods": {
+  "quadric": 8,
+  "vertex clustering": 11,
+  "welded only": 1
+ },
+ "deviation_mm": {
+  "mean_over_meshes": 0.4120516767203576,
+  "largest_p99": 1.78106820135658,
+  "largest": 3.8998265047790084,
+  "method": "two-sided nearest-neighbour distance between 150000 surface samples of each mesh (seed 0); sampling noise about 0.2 mm"
+ }
+}

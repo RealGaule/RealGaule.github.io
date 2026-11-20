@@ -1,0 +1,74 @@
+/* Lab 5 page: additions to ../assets/site.css (colours of the clips: STAGE3_SPEC.md of the lab) */
+:root {
+  --truth: #eeeeee;      /* the true cart */
+  --cloud: #58c4dd;      /* the cloud of carts, the particle filter */
+  --est: #ffeb40;        /* filter estimate: linear KF and EKF */
+  --ukf: #f0a45d;        /* UKF */
+  --reading: #83c167;    /* readings, range rings */
+  --fail: #fc6255;       /* failure, "no readings" */
+  --pink: #d147bd;       /* exponential-coordinate objects */
+}
+
+.cell canvas.view3d { cursor: grab; }
+.cell canvas.view3d:active { cursor: grabbing; }
+.duo { display: grid; grid-template-columns: 1.55fr 1fr; gap: 14px; }
+.duo .cell + .cell { margin-top: 0; }
+.duo .cell canvas, .duo .cell video { aspect-ratio: auto; height: 100%; min-height: 340px; }
+.duo .cell canvas.plot { aspect-ratio: auto; }
+.scene .duo + .cell, .scene .cell + .duo { margin-top: 14px; }
+.loading {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--mute); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+  background: #000; pointer-events: none; transition: opacity 0.4s ease;
+}
+.loading.gone { opacity: 0; }
+
+/* the main thread: two formulas, terms lit by the cards */
+.thread .katex-display { margin: 0.35em 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+.thread .term { padding: 2px 4px; border-radius: 4px; transition: background 0.25s ease, box-shadow 0.25s ease; }
+.thread .term.lit { background: rgba(232, 180, 79, 0.16); box-shadow: 0 0 0 1px rgba(232, 180, 79, 0.55); }
+.about-card.pick { cursor: pointer; }
+.part-note { margin-top: 12px; color: var(--mute); font-size: 14.5px; text-align: center; }
+
+/* a feature panel: conclusion, live demo, then the film */
+.scene figcaption .katex { font-size: 1.02em; }
+.live { position: relative; }
+.clip-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; align-items: center; margin-top: 16px; }
+.clip-note { color: var(--mute); font-size: 14px; line-height: 1.6; }
+.clip-note b { color: var(--ink); font-weight: 600; }
+.clip-note.solo { margin-top: 8px; font-size: 13.5px; }
+.clip-note .eyebrow { font-size: 10px; }
+
+/* gallery: link back to the live demo */
+.style-item a.to-demo { color: var(--accent); text-decoration: none; white-space: nowrap; border-bottom: 1px solid rgba(232, 180, 79, 0.4); }
+.style-item a.to-demo:hover { border-color: var(--accent); }
+
+/* colour keys for legends inside .controls or captions: <span class="legend"><i class="k-truth"></i>true cart ...</span> */
+.legend { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 12px; color: var(--mute); }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 50%; vertical-align: -1px; }
+.k-truth { background: var(--truth); } .k-cloud { background: var(--cloud); } .k-est { background: var(--est); }
+.k-ukf { background: var(--ukf); } .k-read { background: var(--reading); } .k-fail { background: var(--fail); } .k-pink { background: var(--pink); }
+.c-orange { color: var(--ukf); } .c-pink { color: var(--pink); } .c-white { color: var(--truth); }
+
+/* keyboard hints and the focus ring of a panel that listens to keys */
+kbd { display: inline-block; min-width: 20px; padding: 1px 6px; border: 1px solid rgba(242, 239, 233, 0.28); border-bottom-width: 2px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--ink); text-align: center; }
+.feature-panel.keys-on .cell canvas.view3d { outline: 1px solid rgba(232, 180, 79, 0.45); outline-offset: -1px; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--mono); font-size: 11.5px; color: var(--ink); }
+
+@media (max-width: 820px) {
+  .duo { grid-template-columns: 1fr; }
+  .duo .cell canvas { min-height: 260px; }
+  .clip-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  h1 { overflow-wrap: anywhere; }
+  .thread .katex-display { font-size: 0.68em; }
+  .hero h1 br { display: none; }
+  .controls input[type="range"] { width: 130px; }
+  .summary { font-size: 12.5px; table-layout: fixed; }
+  .summary th, .summary td { padding: 8px 4px; overflow-wrap: anywhere; hyphens: auto; }
+  .summary th { letter-spacing: 0.08em; }
+  .summary th:nth-child(1), .summary td:nth-child(1) { width: 24%; }
+  .summary th:nth-child(4), .summary td:nth-child(4) { width: 32%; }
+  .summary td a { white-space: normal; }
+}

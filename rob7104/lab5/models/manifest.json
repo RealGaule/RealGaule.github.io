@@ -1,0 +1,350 @@
+{
+ "written_by": "web/export_models.py",
+ "mujoco": "3.12.0",
+ "glow_emission": 1.0,
+ "cart": {
+  "wheel_radius": 0.033,
+  "axle": 0.2,
+  "length": 0.24,
+  "width": 0.221,
+  "height": 0.106,
+  "wheel1": "right (joint <name>_w1)",
+  "wheel2": "left (joint <name>_w2)",
+  "light_geom": "<name>_light",
+  "estimate_alpha": 0.42
+ },
+ "colours": {
+  "truth": [
+   0.93,
+   0.93,
+   0.93
+  ],
+  "estimate_yellow": [
+   1.0,
+   0.92,
+   0.25
+  ],
+  "ukf_orange": [
+   0.9411764705882353,
+   0.6431372549019608,
+   0.36470588235294116
+  ],
+  "cloud_blue": [
+   0.345,
+   0.769,
+   0.867
+  ],
+  "readings_green": [
+   0.514,
+   0.757,
+   0.404
+  ]
+ },
+ "models": [
+  {
+   "file": "cart.mjb",
+   "bytes": 200306,
+   "ngeom": 23,
+   "nmesh": 5,
+   "nq": 2,
+   "mocap_bodies": [
+    "cart"
+   ],
+   "other_bodies": [],
+   "joints": [
+    "cart_w1",
+    "cart_w2"
+   ],
+   "named_geoms": [
+    "cart_light"
+   ],
+   "glow_geoms": 8,
+   "use": "the cart alone (true cart); clouds are drawn by the page from cart_ghost.json"
+  },
+  {
+   "file": "cart_est.mjb",
+   "bytes": 212673,
+   "ngeom": 46,
+   "nmesh": 5,
+   "nq": 4,
+   "mocap_bodies": [
+    "cart",
+    "est"
+   ],
+   "other_bodies": [],
+   "joints": [
+    "cart_w1",
+    "cart_w2",
+    "est_w1",
+    "est_w2"
+   ],
+   "named_geoms": [
+    "cart_light",
+    "est_light"
+   ],
+   "glow_geoms": 16,
+   "use": "true cart and one translucent yellow estimate cart"
+  },
+  {
+   "file": "tunnel.mjb",
+   "bytes": 267089,
+   "ngeom": 163,
+   "nmesh": 5,
+   "nq": 4,
+   "mocap_bodies": [
+    "cart",
+    "est"
+   ],
+   "other_bodies": [],
+   "joints": [
+    "cart_w1",
+    "cart_w2",
+    "est_w1",
+    "est_w2"
+   ],
+   "named_geoms": [
+    "tun_glow0_0",
+    "tun_glow0_1",
+    "tun_glow0_2",
+    "tun_glow0_3",
+    "tun_glow0_4",
+    "tun_glow0_5",
+    "tun_glow0_6",
+    "tun_glow0_7",
+    "tun_glow0_8",
+    "tun_glow0_9",
+    "tun_glow0_10",
+    "tun_glow0_11",
+    "tun_glow0_12",
+    "tun_glow0_13",
+    "tun_glow0_14",
+    "tun_glow0_15",
+    "tun_glow2_0",
+    "tun_glow2_1",
+    "tun_glow2_2",
+    "tun_glow2_3",
+    "tun_glow2_4",
+    "tun_glow2_5",
+    "tun_glow2_6",
+    "tun_glow2_7",
+    "tun_glow2_8",
+    "tun_glow2_9",
+    "tun_glow2_10",
+    "tun_glow2_11",
+    "tun_glow2_12",
+    "tun_glow2_13",
+    "tun_glow2_14",
+    "tun_glow2_15",
+    "cart_light",
+    "est_light"
+   ],
+   "glow_geoms": 48,
+   "use": "scene 1.1: straight track with a tunnel (no readings inside), true cart, estimate cart",
+   "track": {
+    "x0": -2.4,
+    "x1": 2.4,
+    "y": 0.0,
+    "width": 0.5,
+    "tick": 0.5
+   },
+   "tunnel": {
+    "x0": -0.4,
+    "x1": 0.4,
+    "y": 0.0,
+    "width": 0.64,
+    "height": 0.44,
+    "rib_every": 0.4
+   },
+   "note": "lengths as in the video: 1:10 of the lecture example (0.8 m of tunnel = 8 s at 0.1 m/s)"
+  },
+  {
+   "file": "lanes.mjb",
+   "bytes": 276030,
+   "ngeom": 168,
+   "nmesh": 5,
+   "nq": 12,
+   "mocap_bodies": [
+    "cart0",
+    "est0",
+    "cart1",
+    "est1",
+    "cart2",
+    "est2"
+   ],
+   "other_bodies": [],
+   "joints": [
+    "cart0_w1",
+    "cart0_w2",
+    "est0_w1",
+    "est0_w2",
+    "cart1_w1",
+    "cart1_w2",
+    "est1_w1",
+    "est1_w2",
+    "cart2_w1",
+    "cart2_w2",
+    "est2_w1",
+    "est2_w2"
+   ],
+   "named_geoms": [
+    "cart0_light",
+    "est0_light",
+    "cart1_light",
+    "est1_light",
+    "cart2_light",
+    "est2_light"
+   ],
+   "glow_geoms": 48,
+   "use": "section 1.2: three parallel lanes, each with a true cart cart<i> and an estimate cart est<i>",
+   "lanes_y": [
+    -0.7,
+    0.0,
+    0.7
+   ],
+   "track": {
+    "x0": -0.5,
+    "x1": 3.0,
+    "width": 0.5,
+    "tick": 0.5
+   }
+  },
+  {
+   "file": "beacons.mjb",
+   "bytes": 240193,
+   "ngeom": 100,
+   "nmesh": 5,
+   "nq": 6,
+   "mocap_bodies": [
+    "b0",
+    "b1",
+    "shelf",
+    "cart",
+    "ekf",
+    "ukf"
+   ],
+   "other_bodies": [],
+   "joints": [
+    "cart_w1",
+    "cart_w2",
+    "ekf_w1",
+    "ekf_w2",
+    "ukf_w1",
+    "ukf_w2"
+   ],
+   "named_geoms": [
+    "b0_lamp",
+    "b1_lamp",
+    "cart_light",
+    "ekf_light",
+    "ukf_light"
+   ],
+   "glow_geoms": 26,
+   "use": "sections 0 and 3: work area with two beacons (mocap b0, b1; lamps b0_lamp, b1_lamp), a shelf with a back panel that can hide a beacon (mocap 'shelf'), true cart, EKF estimate cart (yellow), UKF estimate cart (orange)",
+   "beacons": [
+    [
+     0.5,
+     1.5
+    ],
+    [
+     2.0,
+     0.0
+    ]
+   ],
+   "beacon_height": 0.55,
+   "shelf": {
+    "pos": [
+     0.15,
+     0.85
+    ],
+    "yaw": 0.0,
+    "length": 0.9,
+    "depth": 0.3,
+    "height": 0.55
+   },
+   "area": [
+    [
+     -0.6,
+     -0.8
+    ],
+    [
+     2.4,
+     2.9
+    ]
+   ],
+   "layouts": {
+    "1R": [
+     [
+      0.5,
+      1.5
+     ]
+    ],
+    "1R_far": [
+     [
+      2.0,
+      0.0
+     ]
+    ],
+    "2R": [
+     [
+      2.0,
+      0.0
+     ],
+     [
+      2.0,
+      2.5
+     ]
+    ],
+    "1RB": [
+     [
+      0.5,
+      1.5
+     ]
+    ]
+   },
+   "note": "line of sight: stage5.los_blocked(p, q, [(pos, yaw, length, depth)]) with the shelf numbers above; a beacon that is not used can be parked far away with setMocap"
+  },
+  {
+   "file": "warehouse.mjb",
+   "bytes": 221268,
+   "ngeom": 64,
+   "nmesh": 5,
+   "nq": 4,
+   "mocap_bodies": [
+    "cart",
+    "est"
+   ],
+   "other_bodies": [
+    "wshelf0"
+   ],
+   "joints": [
+    "cart_w1",
+    "cart_w2",
+    "est_w1",
+    "est_w2"
+   ],
+   "named_geoms": [
+    "cart_light",
+    "est_light"
+   ],
+   "glow_geoms": 16,
+   "use": "section 2: open floor with a painted border and a row of shelves behind it; true cart and estimate cart; the banana cloud is drawn by the page",
+   "area": [
+    [
+     -0.6,
+     -1.3
+    ],
+    [
+     2.2,
+     1.3
+    ]
+   ],
+   "shelves_y": 2.15
+  }
+ ],
+ "cart_ghost": {
+  "file": "cart_ghost.json",
+  "bytes": 19610,
+  "vertices": 534,
+  "faces": 524
+ }
+}

@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="ROB7104 Lab 5: Kalman filtering and the stochastic cart. Predict and correct, the banana distribution, exponential coordinates, EKF, UKF and particle filters." />
+    <title>Lab 5 · Kalman Filtering and the Stochastic Cart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <link rel="stylesheet" href="lab5.css" />
+    <script type="importmap">{"imports": {"three": "../assets/vendor/three.module.min.js"}}</script>
+  </head>
+  <body>
+    <div class="glow" aria-hidden="true"></div>
+    <main class="wrap">
+      <header class="hero">
+        <p class="kicker">ROB7104 · Lab 5</p>
+        <h1>Kalman Filtering and <br />the Stochastic&nbsp;Cart</h1>
+        <p class="team">Predict, correct, and the banana distribution: KF, EKF, UKF · Mathematics for Robotics, MBZUAI</p>
+        <nav class="links" aria-label="Lab materials">
+          <a href="Lab5.html">Read the notebook</a>
+          <a href="Lab5_notebook.zip" download>Download notebook</a>
+          <a href="../lab4/">Lab 4 page</a>
+          <a href="../lab6/">Lab 6 page</a>
+        </nav>
+        <div class="cell hero-demo">
+          <video class="hero-video" controls autoplay muted loop playsinline preload="auto" src="media/hero.mp4" poster="media/hero_poster.png" aria-label="Two thousand carts receive the same command and spread into a banana; two beacons give range readings and the cloud collapses onto the true cart"></video>
+        </div>
+      </header>
+
+      <section class="about" id="thread" aria-label="The main thread">
+        <div class="thread">
+          <div id="thread-formula">\[ \htmlClass{term t-predict}{\underbrace{p(x_k \mid z_{1:k-1}) = \textstyle\int p(x_k \mid x_{k-1})\, p(x_{k-1} \mid z_{1:k-1})\, dx_{k-1}}_{\text{predict: the belief widens}}} \]
+          \[ \htmlClass{term t-correct}{\underbrace{p(x_k \mid z_{1:k}) \;\propto\; p(z_k \mid x_k)\; p(x_k \mid z_{1:k-1})}_{\text{correct: the belief narrows}}} \]</div>
+          <p class="note">What the robot knows about where it is, is a distribution. A filter keeps a shorthand of it: a mean and a covariance, a few sigma points, or a cloud of particles.</p>
+        </div>
+        <div class="about-grid three" style="margin-top: 14px">
+          <a class="about-card pick" data-term="t-predict t-correct" href="#kalman">
+            <p class="about-label">Part 1 · Linear</p>
+            <p><b>The shorthand is exact.</b> Linear model, Gaussian noise: the belief stays Gaussian, and the Kalman filter's mean and covariance lose nothing.</p>
+          </a>
+          <a class="about-card pick" data-term="t-predict" href="#cart">
+            <p class="about-label">Part 2 · The stochastic cart</p>
+            <p><b>The prediction bends.</b> Noisy wheels turn heading errors into a banana-shaped cloud. In exponential coordinates it is close to a Gaussian again.</p>
+          </a>
+          <a class="about-card pick" data-term="t-predict t-correct" href="#nonlinear">
+            <p class="about-label">Part 3 · Nonlinear filters</p>
+            <p><b>Carrying a Gaussian through a curve.</b> Linearise at the mean (EKF) or let sigma points travel (UKF); when the posterior is not Gaussian, use particles.</p>
+          </a>
+        </div>
+        <p class="part-note">Lab 3 was the prediction alone (clouds and Fokker–Planck); Lab 5 adds readings. A position reading can estimate velocity because the system is observable (Lab 4).</p>
+      </section>
+
+      <section class="results" id="opening" aria-label="Section 0: opening">
+        <div class="section-head">
+          <p class="eyebrow">Section 0 · Opening</p>
+          <h2>Where is the cart?</h2>
+          <p class="section-sub">Every cart gets the same command, "drive 1 m straight ahead"; only the noise in the wheels differs.</p>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d00" data-demo="d00" data-clip="s00_opening">
+          <figcaption><b>One command spreads the carts into a banana that a Gaussian ellipse cannot describe; one range reading leaves an arc, two leave a small lump.</b> Set the wheel noise \(DT\) and press <b>drive again</b>: every cart gets the same command. Then switch on one beacon, then two, and watch what is left of the cloud.</figcaption>
+          <div class="live">
+            <style>
+              figure[data-demo="d00"] .duo .cell canvas { min-height: 480px; }
+              @media (max-width: 820px) { figure[data-demo="d00"] .duo .cell canvas { min-height: 330px; } figure[data-demo="d00"] .duo .cell canvas.plot { min-height: 440px; } }
+            </style>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Wheels</span>
+              <label>noise \(DT\) <input type="range" data-ctl="DT" min="0.5" max="8" step="0.5" value="7" data-fmt="1" /><output></output></label>
+              <button data-ctl="drive">drive again</button>
+              <span class="ctl-label">Readings</span>
+              <span class="seg" data-ctl="beacons"><button data-v="0" class="on">beacons off</button><button data-v="1">one beacon</button><button data-v="2">two beacons</button></span>
+              <button data-ctl="gauss" class="on">Gaussian 2σ</button>
+              <span class="legend"><i class="k-truth"></i>true cart <i class="k-cloud"></i>carts, same command <i class="k-est"></i>Gaussian summary <i class="k-read"></i>range reading</span>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>Every cart gets the command "1 m straight ahead in 1 s"; only the white noise in its wheel speeds differs, so the cloud is the prediction \(p(x_T \mid u)\). Heading errors grow with time and turn into sideways errors, which bends the cloud into a banana; a mean and a covariance (yellow) describe it with the wrong shape. A range reading \(z\) to a beacon at \(b\) reweights every cart by the likelihood \(\exp\!\big(-(z - \lVert p - b\rVert)^2 / 2\sigma_r^2\big)\) with \(\sigma_r = 3\) cm: Bayes' rule, as a particle filter does it. One ring keeps only the carts near the ring: a band across the banana, often two lumps far apart, so the rms spread does not shrink (it can even grow); a second ring crossing it leaves one small lump. The rest of the lab is how to do this update cheaply: the Kalman filter (Part 1), the banana itself (Part 2), EKF, UKF and particles (Part 3).</p>
+            </details>
+          </div>
+          <div class="clip-row">
+            <div class="cell clip-cell"><video controls muted loop playsinline preload="none" poster="media/s00_opening_poster.png" src="media/s00_opening.mp4"></video></div>
+            <p class="clip-note"><span class="eyebrow">The film</span><br /><b>Where is the cart?</b> Two thousand carts get the same command; then two beacons give range readings.</p>
+          </div>
+        </figure>
+      </section>
+
+      <section class="results" id="kalman" aria-label="Part 1: the linear Kalman filter">
+        <div class="section-head">
+          <p class="eyebrow">Part 1 · Linear</p>
+          <h2>The Kalman filter</h2>
+          <p class="section-sub">A cart on a straight track with position readings only: \(x = (p, v)\), \(x_{k+1} = F x_k + w_k\), \(z_k = H x_k + n_k\).</p>
+        </div>
+        <div class="feature-tabs" role="tablist">
+          <button class="feature-tab active" data-feature="d11" role="tab" aria-selected="true">Predict and correct</button>
+          <button class="feature-tab" data-feature="d12" role="tab" aria-selected="false">The gain: model or sensor</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d11" data-demo="d11" data-clip="s11_tunnel">
+          <figcaption><b>Predict widens the belief, a reading narrows it: in the tunnel \(\sigma_p\) grows 7.4-fold, and the first reading after it shrinks it 4.4-fold.</b> Step the filter by hand: <b>predict</b> (<kbd>P</kbd>) drives half a second and widens the belief, <b>correct</b> (<kbd>C</kbd>) takes one position reading and narrows it, but inside the tunnel there is none. Lengthen the tunnel (this starts a new run) and watch \(\sigma_p\) grow.</figcaption>
+          <div class="live">
+            <style>
+              figure[data-demo="d11"] .duo .cell canvas { min-height: 440px; }
+              figure[data-demo="d11"] .d11-flag {
+                position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 6px;
+                background: rgba(0, 0, 0, 0.62); color: var(--fail); font: 600 12px var(--sans); letter-spacing: 0.04em;
+                opacity: 0; transition: opacity 0.2s ease; pointer-events: none;
+              }
+              figure[data-demo="d11"] .d11-flag.show { opacity: 1; }
+              figure[data-demo="d11"] .controls button.blocked { border-color: var(--fail); color: var(--fail); }
+            </style>
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <span class="d11-flag" data-ctl="flag">no readings</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Filter</span>
+              <button data-ctl="predict">predict</button>
+              <button data-ctl="correct">correct</button>
+              <button data-ctl="auto">auto</button>
+              <button data-ctl="reset">new run</button>
+              <label>tunnel <input type="range" data-ctl="L" min="0.4" max="2" step="0.2" value="1.6" data-fmt="1" data-unit=" m" /><output></output></label>
+              <button data-ctl="follow" class="on">follow</button>
+              <span class="legend"><i class="k-truth"></i>true cart <i class="k-cloud"></i>belief samples <i class="k-est"></i>estimate, 2σ <i class="k-read"></i>reading</span>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>The state is \(x = (p, v)\), position and velocity; the model is \(x_{k+1} = F x_k + w_k\) with \(w_k \sim N(0, Q)\), and the sensor reads \(z = p + r\), \(r \sim N(0, R)\). Predict pushes the Gaussian through the model: \(\hat x^- = F \hat x\), \(P^- = F P F^\top + Q\), so the ellipse grows and tilts (a velocity error becomes a position error). Correct multiplies the prior by the reading's likelihood; the product is again Gaussian, with gain \(K = P^- H^\top (H P^- H^\top + R)^{-1}\) and \(P^+ = (I - K H) P^-\). In the tunnel only predict runs, and \(P_{pp}\) grows like \(P_{pp} + 2 P_{pv}\tau + P_{vv}\tau^2 + q\tau^3/3\). The blue samples carry the same belief: each moves with its own noise and is shifted by \(K\) at a reading.</p>
+            </details>
+          </div>
+          <div class="clip-row">
+            <div class="cell clip-cell"><video controls muted loop playsinline preload="none" poster="media/s11_tunnel_poster.png" src="media/s11_tunnel.mp4"></video></div>
+            <p class="clip-note"><span class="eyebrow">The film</span><br /><b>Predict and correct.</b> Eight seconds blind in a tunnel, then one reading.</p>
+          </div>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d12" data-demo="d12" data-clip="s12a_gain">
+          <figcaption><b>The ratio of \(Q\) to \(R\) decides whom the filter trusts, and the tilt of the \((p, v)\) ellipse lets a position reading correct the unmeasured velocity.</b> Push the cart with <kbd>↑</kbd> <kbd>↓</kbd> (or hold the buttons) and tune the middle lane's \(Q\) and \(R\): a large \(Q/R\) follows the readings and jitters, a small one is smooth but late after every push.</figcaption>
+          <div class="live">
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Push</span>
+              <button data-ctl="up">speed up ↑</button>
+              <button data-ctl="down">slow down ↓</button>
+              <span class="ctl-label">Your filter</span>
+              <label>\(Q\) <input type="range" data-ctl="Q" min="-2" max="2" step="0.1" value="0" /><output></output></label>
+              <label>\(R\) <input type="range" data-ctl="R" min="-2" max="2" step="0.1" value="0" /><output></output></label>
+              <span class="seg" data-ctl="rate"><button data-v="1" class="on">real time</button><button data-v="0.33">slow ×1/3</button></span>
+              <button data-ctl="others" class="on">other lanes</button>
+              <button data-ctl="reset">reset</button>
+              <span class="legend"><i class="k-truth"></i>true cart, true velocity <i class="k-est"></i>estimate, 2σ <i class="k-read"></i>position reading <i class="k-cloud"></i>samples of the belief</span>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>The filter's model is \(dp = v\,dt,\ dv = \sqrt{q}\,dW\); a reading of the position arrives every 0.5 s with noise \(R\). The gain \(K = P^-H^T(HP^-H^T+R)^{-1}\) depends only on the ratio of the assumed \(Q\) to the assumed \(R\): raise \(Q\) or lower \(R\) and the estimate moves a larger share \(K_p\) of the way to each reading. Prediction shears the \((p, v)\) belief (faster states get farther ahead), so \(P_{pv} > 0\) and a position innovation \(\nu\) also moves the velocity by \(K_v\nu\), along the tilt axis of slope \(P_{pv}/P_{pp}\). The lower plot is the stationary theory for a drive without pushes: the true position error is smallest at the true ratio, and a filter that trusts the model 100 times too much ends worse than the bare sensor. Your pushes are accelerations the model does not know about, so while you push, a larger \(Q\) pays.</p>
+            </details>
+          </div>
+          <div class="clip-row">
+            <div class="cell clip-cell"><video controls muted loop playsinline preload="none" poster="media/s12a_gain_poster.png" src="media/s12a_gain.mp4"></video></div>
+            <p class="clip-note"><span class="eyebrow">The film</span><br /><b>The gain.</b> Three filters on three lanes: one trusts the sensor, one the model, one is tuned.</p>
+          </div>
+        </figure>
+      </section>
+
+      <section class="results" id="cart" aria-label="Part 2: the stochastic cart">
+        <div class="section-head">
+          <p class="eyebrow">Part 2 · The stochastic cart</p>
+          <h2>The banana distribution</h2>
+          <p class="section-sub">A differential-drive cart whose wheel speeds carry white noise of strength \(D\); \(DT\) sets how far the cloud spreads.</p>
+        </div>
+        <div class="feature-tabs" role="tablist">
+          <button class="feature-tab active" data-feature="d21" role="tab" aria-selected="true">Noisy wheels</button>
+          <button class="feature-tab" data-feature="d22" role="tab" aria-selected="false">Exponential coordinates</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d21" data-demo="d21" data-clip="s21_cart">
+          <figcaption><b>The mean cart falls behind the command: 0.987, 0.947 and 0.910 m of a 1 m run for \(DT = 1, 4, 7\).</b> Raise the wheel noise \(DT\), switch between the straight run and the quarter arc, and change how many carts drive the same command: with one cart the mean is a guess, with thousands its lag lies on the theory curve.</figcaption>
+          <div class="live">
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d" style="min-height:470px"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+                <div class="d21-labels" style="position:absolute;inset:0;pointer-events:none;font-size:12px;"></div>
+              </div>
+              <div class="cell"><canvas class="plot" style="min-height:470px"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Noise</span>
+              <label>\(DT\) <input type="range" data-ctl="DT" min="0.5" max="12" step="0.5" value="7" data-fmt="1" aria-label="wheel noise D times run time T" /><output></output></label>
+              <span class="ctl-label">Command</span>
+              <span class="seg" data-ctl="cmd"><button data-v="straight" class="on">straight 1 m</button><button data-v="arc">quarter arc</button></span>
+              <span class="ctl-label">Carts</span>
+              <span class="seg" data-ctl="n"><button data-v="1">1</button><button data-v="10">10</button><button data-v="100">100</button><button data-v="2000" class="on">2000</button><button data-v="8000">8000</button></span>
+            </div>
+            <div class="controls">
+              <button data-ctl="go">drive again</button>
+              <button data-ctl="trails" class="on">trails</button>
+              <span class="ctl-label">Speed</span>
+              <span class="seg" data-ctl="speed"><button data-v="0.3" class="on">slow</button><button data-v="1">real time</button></span>
+              <span class="legend"><i class="k-truth"></i>one run <i class="k-cloud"></i>the other runs</span>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>Each wheel turns at its commanded rate plus white noise of strength \(D\), so the heading error is a random walk, \(d\theta_{\mathrm{err}} = \sqrt{D}\,\tfrac{r}{l}\,(dW_1 - dW_2)\), and its variance grows linearly, \(\sigma_\theta^2(t) = 2Dr^2t/l^2\), on the straight run and on the arc alike. The cart moves along its own heading, and \(E[\cos\theta_{\mathrm{err}}] = e^{-\sigma_\theta^2/2} < 1\), so the mean position falls behind the command: \(E[x(T)] = \int_0^T v\,e^{-\sigma_\theta^2(t)/2}\,dt\) on the straight run. Every cart here is a simulation of the lab's SDE (Euler–Maruyama, 1 ms steps, the same numerics as the clips); the arc is a quarter turn of radius \(2/\pi\) m with the same 1 m of path, where the mean also falls inside the turn. The averages carry a standard error of order \(1/\sqrt{N}\): with ten carts they wander around the theory curve, with thousands they sit on it.</p>
+            </details>
+          </div>
+          <div class="clip-row">
+            <div class="cell clip-cell"><video controls muted loop playsinline preload="none" poster="media/s21_cart_poster.png" src="media/s21_cart.mp4"></video></div>
+            <p class="clip-note"><span class="eyebrow">The film</span><br /><b>The cart with noisy wheels.</b> The same command many times: the cloud grows from a dot into a banana.</p>
+          </div>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d22" data-demo="d22" data-clip="s23_expcoords">
+          <figcaption><b>In exponential coordinates the banana is close to a Gaussian, not exactly one: at \(DT = 7\) the total-variation distance to the cloud falls from 0.35 to 0.14.</b> Lift each cart's heading into a third axis, then slide into exponential coordinates: the curved sheet nearly straightens, and the pink Gaussian, drawn back on the floor, bends into the banana.</figcaption>
+          <div class="live">
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d" style="min-height:480px"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot" style="min-height:480px"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Picture</span>
+              <label>heading as height <input type="range" data-ctl="lift" min="0" max="1" step="0.01" value="0" data-fmt="2" aria-label="lift each cart's heading into a vertical axis" /><output></output></label>
+              <label>\((x, y, \theta)\) → exp. coords <input type="range" data-ctl="s" min="0" max="1" step="0.01" value="0" data-fmt="2" aria-label="deform the cloud from (x, y, theta) to exponential coordinates" /><output></output></label>
+              <button data-ctl="drive">drive again</button>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Pink Gaussian</span>
+              <span class="seg" data-ctl="gauss"><button data-v="fit" class="on">fitted to the carts</button><button data-v="cf">closed form \(\mu(t), \Sigma(t)\)</button></span>
+              <span class="ctl-label">Yellow</span>
+              <button data-ctl="yellow" class="on">Gaussian in \((x, y, \theta)\)</button>
+              <span class="ctl-label">Noise \(DT\)</span>
+              <span class="seg" data-ctl="DT"><button data-v="1">1</button><button data-v="4">4</button><button data-v="7" class="on">7</button></span>
+            </div>
+            <div class="controls">
+              <span class="legend"><i class="k-cloud"></i>carts (same command, 1 m straight) <i class="k-est"></i>Gaussian in \((x, y, \theta)\) <i class="k-pink"></i>Gaussian in exponential coordinates</span>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>A cart's pose is a group element \(g \in SE(2)\). Exponential coordinates measure each cart from the mean along the group's own straight lines, \(\xi = \log(\mu^{-1} g) = (v_1, v_2, \alpha)\): constant twists, which are arcs on the floor. Wheel noise drives the carts along such arcs, so in \(\xi\) the cloud is close to a Gaussian \(N(0, \Sigma(t))\), and \(\Sigma(t) = \int_0^t \mathrm{Ad}\,H H^T \mathrm{Ad}^T\,d\tau\) has a closed form (Lecture 11+12), no samples needed. Pushed back through \(g = \mu \exp(\xi)\), its ellipsoid bends into the banana. Close, not exact: a residual bend remains (the skewness drops but not to zero), and the first-order \(\Sigma_{11}\) is too small. The middle of the slider is a straight-line blend of the two coordinate sets; only its two ends have a meaning.</p>
+            </details>
+          </div>
+          <div class="clip-row">
+            <div class="cell clip-cell"><video controls muted loop playsinline preload="none" poster="media/s23_expcoords_poster.png" src="media/s23_expcoords.mp4"></video></div>
+            <p class="clip-note"><span class="eyebrow">The film</span><br /><b>Exponential coordinates.</b> The cloud in \((x, y, \theta)\) morphs into exponential coordinates.</p>
+          </div>
+        </figure>
+      </section>
+
+      <section class="results" id="nonlinear" aria-label="Part 3: nonlinear filters">
+        <div class="section-head">
+          <p class="eyebrow">Part 3 · Nonlinear filters</p>
+          <h2>EKF, UKF, and beyond a Gaussian</h2>
+          <p class="section-sub">The same Kalman formulas, with the cart's nonlinear model in place of \(F\) and \(H\). EKF yellow, UKF orange, particles blue.</p>
+        </div>
+        <div class="feature-tabs" role="tablist">
+          <button class="feature-tab active" data-feature="d31" role="tab" aria-selected="true">EKF</button>
+          <button class="feature-tab" data-feature="d32" role="tab" aria-selected="false">UKF</button>
+          <button class="feature-tab" data-feature="d33" role="tab" aria-selected="false">Beyond a Gaussian</button>
+        </div>
+        <figure class="scene feature-panel active" data-feature="d31" data-demo="d31" data-clip="s31_ekf">
+          <figcaption><b>The EKF moves only the mean, so it misses the lag: driving blind at \(DT = 7\), the cloud's mean falls 0.09 m behind the EKF's estimate, and the EKF's 95 % ellipse holds 75 % of the carts.</b> Choose how long the cart drives blind at the end of its 1 m run, then press <b>drive</b>. Yellow pin: the EKF's mean. Blue pin: the mean of the cloud.</figcaption>
+          <div class="live">
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d" style="min-height:480px"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot" style="min-height:480px"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Drive</span>
+              <label>blind for the last <input type="range" data-ctl="tb" min="0" max="4" step="0.5" value="4" data-fmt="1" data-unit=" s" /><output></output></label>
+              <span class="seg" data-ctl="DT"><button data-v="1">\(DT = 1\)</button><button data-v="4">\(4\)</button><button data-v="7" class="on">\(7\)</button></span>
+              <button data-ctl="go">drive</button>
+              <button data-ctl="new">new noise</button>
+              <span class="seg" data-ctl="speed"><button data-v="0.5">½×</button><button data-v="1" class="on">1×</button><button data-v="3">3×</button></span>
+            </div>
+            <div class="controls">
+              <span class="legend"><i class="k-truth"></i>true cart <i class="k-cloud"></i>where the cart can be <i class="k-est"></i>EKF estimate, 95 % ellipse <i class="k-read"></i>range and bearing reading <i class="k-fail"></i>no readings</span>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>The EKF uses the Kalman formulas unchanged, with \(F = \partial f/\partial x\) and \(H = \partial h/\partial x\) taken at the mean. One wheel step moves the cart forward by \(ds\cos\theta\) along the track. The mean goes through the model unchanged, \(\hat x^- = f(\hat x)\), and at \(\hat\theta = 0\) the tangent of \(\cos\theta\) is flat, so the EKF says that turning costs no forward progress. The true average is \(\mathbb E[\cos\theta] = e^{-\sigma_\theta^2/2}\cos\hat\theta\). With a reading every 0.5 s the heading belief stays narrow (sd 0.05 to 0.22 rad), so the tangent and the curve agree. Blind for 4 s at \(DT = 7\), the heading sd grows to 0.62 rad. The cloud's mean then lags \(L\bigl(1-(1-e^{-a})/a\bigr)\) with \(L = 1\) m, \(a = DT\,r^2/l^2\) (wheel radius \(r = 0.033\) m, axle \(l = 0.2\) m), which is 0.09 m. The EKF's 95 % ellipse is too short along the track and holds 75 % of the carts.</p>
+            </details>
+          </div>
+          <div class="clip-row">
+            <div class="cell clip-cell"><video controls muted loop playsinline preload="none" poster="media/s31_ekf_poster.png" src="media/s31_ekf.mp4"></video></div>
+            <p class="clip-note"><span class="eyebrow">The film</span><br /><b>EKF: linearise at the mean.</b> Driving blind, the estimate stays on the commanded end.</p>
+          </div>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d32" data-demo="d32" data-clip="s32_ukf">
+          <figcaption><b>Sigma points fix the mean, not the spread: the UKF ends at 0.913 m against the true 0.910 m (\(DT = 7\)), but its 95 % ellipse holds 85 % of the carts.</b> Press <b>drive</b> or <b>step</b> and watch the eleven small orange carts (the UKF's sigma points) drive the same command along their own headings; switch to the EKF, scrub the blind time, raise the wheel noise \(DT\).</figcaption>
+          <div class="live">
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d" style="min-height: 460px"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell"><canvas class="plot" style="min-height: 460px"></canvas></div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Drive blind</span>
+              <button data-ctl="go">drive</button>
+              <button data-ctl="step">step</button>
+              <label>time <input type="range" data-ctl="t" min="0" max="1" step="0.025" value="1" data-fmt="3" data-unit=" s" /><output></output></label>
+              <label>\(DT\) <input type="range" data-ctl="DT" min="0.5" max="8" step="0.5" value="7" data-fmt="1" /><output></output></label>
+              <span class="seg" data-ctl="filter"><button data-v="ekf">EKF</button><button data-v="ukf" class="on">UKF</button></span>
+              <button data-ctl="sigma" class="on">sigma points</button>
+              <button data-ctl="red" class="on">outside in red</button>
+              <button data-ctl="reseed">new carts</button>
+            </div>
+            <div class="controls">
+              <span class="legend"><span style="white-space:nowrap"><i class="k-truth"></i>one cart (white arrow)</span> <span style="white-space:nowrap"><i class="k-cloud"></i>cloud of 4000 carts (blue pin: its mean)</span> <span style="white-space:nowrap"><i class="k-est"></i>EKF (pin) and 95 % ellipse</span> <span style="white-space:nowrap"><i class="k-ukf"></i>UKF (pin), 95 % ellipse, sigma points</span> <span style="white-space:nowrap"><i class="k-fail"></i>carts outside the shown ellipse</span></span>
+              <span class="readout" data-ctl="info"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>Driving blind, a cart advances \(v\,\cos\theta\,dt\) per step, and the mean advance is \(v\,\mathbb E[\cos\theta] \approx v\,(1-\sigma_\theta^2/2)\), less than the command. The EKF moves only the mean, \(\cos(\mathbb E\theta) = 1\), so it stays on the commanded end. The UKF (Julier and Uhlmann) augments the state with the two wheel-noise terms, \((x, y, \theta, n_1, n_2)\), places \(2\cdot 5+1 = 11\) sigma points with weights \(1/6\) (centre) and \(1/12\), drives each through the step and averages them: the right panel shows that weighted average of \(\cos\theta\) next to the cloud's. That fixes the mean to second order. The result is still one Gaussian: its spread along the track stays near the EKF's (0.067 m and 0.062 m) while the cloud's is 0.112 m at \(DT = 7\), so the cloud's tail leaves the ellipse. Live numbers come from 4000 carts (seeded); the caption's from \(10^5\) to \(10^6\).</p>
+            </details>
+          </div>
+          <div class="clip-row">
+            <div class="cell clip-cell"><video controls muted loop playsinline preload="none" poster="media/s32_ukf_poster.png" src="media/s32_ukf.mp4"></video></div>
+            <p class="clip-note"><span class="eyebrow">The film</span><br /><b>UKF: sigma points.</b> Eleven sigma points drive the command and recombine into one Gaussian.</p>
+          </div>
+        </figure>
+        <figure class="scene feature-panel" data-feature="d33" data-demo="d33" data-clip="s33_beyond_gaussian">
+          <figcaption><b>A range ring cuts the banana into an arc that one Gaussian cannot hold: at the severe setting the EKF loses the cart in about a third of the runs, the UKF in about a sixth; a particle filter with enough particles keeps it.</b> Let the cart drive the arc, or steer with <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>. The beacon is dark for 0.5 s (<b>mild</b>) or 1.5 s (<b>severe</b>), then reads the range every 0.05 s. In <b>severe</b>, the yellow and orange ellipses sometimes settle on the wrong piece of the green ring; the blue cloud almost always keeps the cart.</figcaption>
+          <div class="live">
+            <div class="duo">
+              <div class="cell">
+                <canvas class="view3d" style="min-height: 460px;"></canvas>
+                <span class="tag tag-live">LIVE 3D · DRAG TO ORBIT</span>
+                <div class="loading">loading 3D</div>
+              </div>
+              <div class="cell">
+                <canvas class="plot" style="min-height: 460px;"></canvas>
+              </div>
+            </div>
+            <div class="controls">
+              <span class="ctl-label">Wheel noise</span>
+              <span class="seg" data-ctl="noise"><button data-v="mild" class="on">mild \(D = 1\)</button><button data-v="severe">severe \(D = 8\)</button></span>
+              <span class="ctl-label">Filters</span>
+              <button data-ctl="ekf" class="on">EKF</button>
+              <button data-ctl="ukf" class="on">UKF</button>
+              <button data-ctl="pf" class="on">particle filter</button>
+              <span class="ctl-label">Drive</span>
+              <button data-ctl="auto" class="on">auto arc</button>
+              <button data-ctl="again">new run</button>
+              <label>slow motion <input type="range" data-ctl="speed" min="0.1" max="1" step="0.05" value="0.35" data-fmt="2" /><output></output></label>
+              <span class="legend"><i class="k-truth"></i>true cart <i class="k-cloud"></i>particle filter <i class="k-est"></i>EKF, 2σ <i class="k-ukf"></i>UKF, 2σ <i class="k-read"></i>range reading <i class="k-fail"></i>no readings</span>
+              <span class="readout" data-ctl="info"></span>
+              <span class="readout" data-ctl="tally"></span>
+            </div>
+            <details class="prompt">
+              <summary>Why</summary>
+              <p>A range reading \(z = \lVert p - b\rVert + \varepsilon\), \(\varepsilon \sim \mathcal N(0, \sigma_r^2)\), says only that the cart is somewhere on a ring around the beacon \(b\). After a long blind drive the prior is a wide banana, and the ring cuts it into a thin curved arc, later sometimes two lumps on either side of the beacon. The EKF and UKF must hold this in one mean and one covariance \((m, P)\); the EKF linearises the ring at its own mean, the UKF samples a few points around it, and both can settle on the wrong piece. The particle filter keeps the samples themselves, weights them by the likelihood \(p(z \mid x) \propto \exp\!\big(-(z - \lVert p - b\rVert)^2 / 2\sigma_r^2\big)\) and resamples, so the arc and both lumps survive. While the beacon is dark the cart only predicts. The map under the top view is the clip's experiment (the same arc, a fixed blind time; the white box marks this run's cell): the two Gaussian filters fail in the same corner of much noise and long blind time, the UKF later and about half as often.</p>
+            </details>
+          </div>
+          <div class="clip-row">
+            <div class="cell clip-cell"><video controls muted loop playsinline preload="none" poster="media/s33_beyond_gaussian_poster.png" src="media/s33_beyond_gaussian.mp4"></video></div>
+            <p class="clip-note"><span class="eyebrow">The film</span><br /><b>When a Gaussian is not enough.</b> No readings for a while; then one beacon's range readings reach three filters.</p>
+          </div>
+        </figure>
+      </section>
+
+      <section class="results" id="summary" aria-label="Summary">
+        <div class="section-head">
+          <p class="eyebrow">In one table</p>
+          <h2>One loop, five ways to write the belief</h2>
+          <p class="section-sub">Each row writes the belief down in a different way; the filters all run the same predict-and-correct loop.</p>
+        </div>
+        <table class="summary">
+          <thead><tr><th>Filter</th><th>The belief as</th><th>Cost per step</th><th>When it fails</th></tr></thead>
+          <tbody>
+            <tr><td><b><a href="#d11">Kalman filter</a></b></td><td>mean and covariance</td><td>a few small matrix products</td><td>never, for a linear model with Gaussian noise and the right \(Q\), \(R\); a too-small \(Q\) makes it overconfident</td></tr>
+            <tr><td><b><a href="#d31">EKF</a></b></td><td>mean and covariance, the model linearised at the mean</td><td>plus two Jacobians</td><td>curved models: the mean stays at the noise-free point, the ellipse is too small (its 95 % ellipse holds 75 % of the carts at \(DT = 7\))</td></tr>
+            <tr><td><b><a href="#d32">UKF</a></b></td><td>mean and covariance, from \(2n + 1\) points through the true model</td><td>\(2n + 1\) model evaluations</td><td>mean nearly right, spread still too small (85 %); it fails together with the EKF, later and about half as often</td></tr>
+            <tr><td><b><a href="#d22">Exponential coordinates</a></b></td><td>a Gaussian on the group of poses</td><td>closed form, no samples</td><td>close to the banana, not equal to it; closer the less noise</td></tr>
+            <tr><td><b><a href="#d33">Particle filter</a></b></td><td>the cloud itself</td><td>thousands of model evaluations</td><td>too few particles</td></tr>
+          </tbody>
+        </table>
+        <p class="part-note">The reasoning behind every demo, with the EKF and UKF equations, is in <a href="Lab5.html" style="color: var(--accent)">the notebook</a>.</p>
+      </section>
+
+      <section class="results" id="films" aria-label="Films from the notebook">
+        <div class="section-head">
+          <p class="eyebrow">Gallery</p>
+          <h2>The films from the notebook</h2>
+          <p class="section-sub">White: the true cart. Blue: the cloud of carts or particles. Yellow: the Kalman filter or EKF and its ellipse; orange: the UKF; pink: exponential coordinates. Green: readings; red: no readings.</p>
+        </div>
+        <div class="style-grid">
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s00_opening_poster.png" src="media/s00_opening.mp4"></video></div><p><b>Where is the cart?</b> Two thousand carts get the same command; then two beacons give range readings. <a class="to-demo" href="#d00">live demo</a></p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s11_tunnel_poster.png" src="media/s11_tunnel.mp4"></video></div><p><b>Predict and correct.</b> Eight seconds blind in a tunnel, then one reading. <a class="to-demo" href="#d11">live demo</a></p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s12a_gain_poster.png" src="media/s12a_gain.mp4"></video></div><p><b>The gain.</b> Three filters on three lanes: one trusts the sensor, one the model, one is tuned. <a class="to-demo" href="#d12">live demo</a></p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s21_cart_poster.png" src="media/s21_cart.mp4"></video></div><p><b>The cart with noisy wheels.</b> The same command many times: the cloud grows from a dot into a banana. <a class="to-demo" href="#d21">live demo</a></p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s23_expcoords_poster.png" src="media/s23_expcoords.mp4"></video></div><p><b>Exponential coordinates.</b> The cloud in \((x, y, \theta)\) morphs into exponential coordinates. <a class="to-demo" href="#d22">live demo</a></p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s31_ekf_poster.png" src="media/s31_ekf.mp4"></video></div><p><b>EKF: linearise at the mean.</b> Driving blind, the estimate stays on the commanded end. <a class="to-demo" href="#d31">live demo</a></p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s32_ukf_poster.png" src="media/s32_ukf.mp4"></video></div><p><b>UKF: sigma points.</b> Eleven sigma points drive the command and recombine into one Gaussian. <a class="to-demo" href="#d32">live demo</a></p></div>
+          <div class="style-item"><div class="cell style-cell"><video controls muted loop playsinline preload="none" poster="media/s33_beyond_gaussian_poster.png" src="media/s33_beyond_gaussian.mp4"></video></div><p><b>When a Gaussian is not enough.</b> No readings for a while; then one beacon's range readings reach three filters. <a class="to-demo" href="#d33">live demo</a></p></div>
+        </div>
+      </section>
+
+      <footer class="credits">
+        <h2 class="credits-title">ROB7104 Mathematics for Robotics</h2>
+        <p>Lab 5 · Kalman filtering and the stochastic cart · Mathematics for Robotics, MBZUAI</p>
+        <p class="notes">The carts move by the stochastic kinematic model of the lectures, not by a friction or contact simulation; wheel radius and axle length follow Long et al. (RSS 2012).
+          They are drawn with <a href="https://mujoco.org/" target="_blank" rel="noreferrer">MuJoCo</a> and three.js (MIT).</p>
+      </footer>
+    </main>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        if (window.renderMathInElement) {
+          renderMathInElement(document.body, {
+            delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }],
+            trust: true, strict: false, throwOnError: false,
+          });
+        }
+      });
+    </script>
+    <script src="../assets/site.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,189 @@
+{
+ "source": "Lab6_Optimization/build/out/s21a_noise_facts.json and out/s21b_annealing_facts.json (Python core, render/s21a_noise.py and render/s21b_annealing.py); copied by the d21 demo author on 2026-11-20. Numbers that sim6.js does not port (Boltzmann basin prediction) or that need samples larger than a browser run.",
+ "split_from_maximum": {
+  "n_runs": 20000,
+  "alpha": 1.0,
+  "sigma_g": 0.04,
+  "steps": 300,
+  "share_elbow_up": 0.50145,
+  "standard_error": 0.0035355339059327377
+ },
+ "clip_split": {
+  "n_runs": 200,
+  "n_elbow_up": 103,
+  "n_elbow_down": 97
+ },
+ "escape_steps_mean": 5.4,
+ "noise_floor_ratio": {
+  "alpha_1_sigma_0.04": {
+   "alpha": 1.0,
+   "sigma_g": 0.04,
+   "ratio": [
+    1.0116591316368069,
+    1.00505013795155
+   ],
+   "n_samples": 320000
+  },
+  "alpha_0.5_sigma_0.04": {
+   "alpha": 0.5,
+   "sigma_g": 0.04,
+   "ratio": [
+    1.0054325099615198,
+    1.001224150265167
+   ],
+   "n_samples": 320000
+  },
+  "alpha_1_sigma_0.02": {
+   "alpha": 1.0,
+   "sigma_g": 0.02,
+   "ratio": [
+    0.999527772926862,
+    1.0018846463526285
+   ],
+   "n_samples": 320000
+  },
+  "alpha_0.5_sigma_0.02": {
+   "alpha": 0.5,
+   "sigma_g": 0.02,
+   "ratio": [
+    1.0029613057447486,
+    1.002008529416879
+   ],
+   "n_samples": 320000
+  }
+ },
+ "annealing": {
+  "w_m": 0.04,
+  "alpha": 0.25,
+  "T_hi": 0.03,
+  "T_lo": 0.002,
+  "schedule": "geometric",
+  "noise_free_steps_at_the_end": 4000,
+  "end_rule": "within 0.05 rad of the deeper solution after the noise-free steps",
+  "prediction_curve": {
+   "what": "share of exp(-f_w/T) in the basin of the deeper solution, summed over a 480 x 480 grid (sim/experiments.boltzmann_weights)",
+   "T": [
+    0.0017,
+    0.0021250370038720418,
+    0.0026563425104855665,
+    0.0033204859586706964,
+    0.004150679725301623,
+    0.005188440004404345,
+    0.006485662942193676,
+    0.008107219851060691,
+    0.010134201283547027,
+    0.012667972195426452,
+    0.0158352409878255,
+    0.019794395920212014,
+    0.024743425764555464,
+    0.030929820795436005,
+    0.03866294924319558
+   ],
+   "share": [
+    0.9999903408282761,
+    0.9999010449957157,
+    0.9993635297450509,
+    0.9971822276148119,
+    0.9907720092793191,
+    0.9763587115078789,
+    0.9504938208091154,
+    0.9121823465808152,
+    0.8639700006086577,
+    0.8110256464397515,
+    0.7589387648134455,
+    0.7118132328339625,
+    0.6716125789132801,
+    0.6385759720133852,
+    0.6120048591956624
+   ]
+  },
+  "fixed_T_measured": [
+   {
+    "T": 0.006,
+    "share": 0.95908,
+    "se": 0.003850545658301777,
+    "predicted": 0.9609499104018926,
+    "steps": 1500000,
+    "n_runs_per_start": 2000
+   },
+   {
+    "T": 0.008,
+    "share": 0.9150266666666667,
+    "se": 0.00277643134657103,
+    "predicted": 0.9147872002630416,
+    "steps": 1500000,
+    "n_runs_per_start": 2000
+   },
+   {
+    "T": 0.012,
+    "share": 0.8232566666666667,
+    "se": 0.001769231289446226,
+    "predicted": 0.8239971409223795,
+    "steps": 1500000,
+    "n_runs_per_start": 2000
+   },
+   {
+    "T": 0.016,
+    "share": 0.7572316666666667,
+    "se": 0.0014008856861127375,
+    "predicted": 0.7566200608618237,
+    "steps": 1500000,
+    "n_runs_per_start": 2000
+   },
+   {
+    "T": 0.024,
+    "share": 0.67647,
+    "se": 0.0012569206418863524,
+    "predicted": 0.6766773475375616,
+    "steps": 1500000,
+    "n_runs_per_start": 2000
+   },
+   {
+    "T": 0.04,
+    "share": 0.6077883333333334,
+    "se": 0.0012576199368472,
+    "predicted": 0.6084619437898702,
+    "steps": 1500000,
+    "n_runs_per_start": 2000
+   }
+  ],
+  "cooling": {
+   "1000": {
+    "share_deep": 0.107,
+    "standard_error": 0.0069119823495145,
+    "n_runs": 2000
+   },
+   "3000": {
+    "share_deep": 0.2725,
+    "standard_error": 0.00995599693652022,
+    "n_runs": 2000
+   },
+   "10000": {
+    "share_deep": 0.602,
+    "standard_error": 0.010945227270367666,
+    "n_runs": 2000
+   },
+   "30000": {
+    "share_deep": 0.802,
+    "standard_error": 0.008910555538236659,
+    "n_runs": 2000
+   },
+   "100000": {
+    "share_deep": 0.8525,
+    "standard_error": 0.007929178709046731,
+    "n_runs": 2000
+   },
+   "300000": {
+    "share_deep": 0.9,
+    "standard_error": 0.006708203932499368,
+    "n_runs": 2000
+   },
+   "1000000": {
+    "share_deep": 0.9375,
+    "standard_error": 0.005412658773652742,
+    "n_runs": 2000
+   }
+  },
+  "kramers_relaxation_steps_at_T_0012": 7313.064367206919
+ }
+}
